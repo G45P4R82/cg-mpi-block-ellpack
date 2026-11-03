@@ -1,0 +1,23 @@
+# Build outputs
+bin/
+build/
+*.o
+*.so
+
+# Experiment outputs
+results/raw/*.log
+results/processed/*.csv
+results/plots/*.png
+
+# Local credentials and cluster configuration
+.env
+*.kubeconfig
+*.pem
+
+# Python/editor files
+__pycache__/
+*.py[cod]
+.venv/
+.vscode/
+.idea/
+.DS_Store
