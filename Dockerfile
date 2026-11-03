@@ -2,7 +2,7 @@ FROM --platform=$TARGETPLATFORM mpioperator/mpi-pi:mpich
 
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    g++ libopenblas-dev openssh-server \
+    g++ libmpich-dev mpich libopenblas-dev openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
 COPY include /tmp/cg/include
