@@ -6,8 +6,10 @@ spec:
   slotsPerWorker: 1
   mpiImplementation: MPICH
   sshAuthMountPath: /home/mpiuser/.ssh
+  launcherCreationPolicy: WaitForWorkersReady
   runPolicy:
     cleanPodPolicy: Running
+    activeDeadlineSeconds: 3600
   mpiReplicaSpecs:
     Launcher:
       replicas: 1
