@@ -1,0 +1,8 @@
+.git
+.github
+results
+report
+docs
+jobs
+scripts
+*.tar.gz

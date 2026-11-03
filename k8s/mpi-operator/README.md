@@ -32,3 +32,17 @@ Nao publique contexto, endpoint, nomes de nos ou credenciais.
 O arquivo `cg-mpijob.yaml.example` e um template. Antes de aplicar, substitua
 somente `CG_IMAGE` por uma imagem ARM64 que contenha MPICH, `sshd`, o executavel
 CG e as matrizes, e `MATRIX_PATH` pelo caminho interno da imagem.
+
+## Construir a imagem ARM64
+
+Defina uma imagem em um registry acessivel pelos nos:
+
+```bash
+docker buildx build --platform linux/arm64 \
+  -t REGISTRY/cg-mpi:arm64 \
+  --push .
+```
+
+Nao coloque tokens do registry no Git. Se o registry for privado, crie um
+`imagePullSecret` no namespace de execucao e adicione `imagePullSecrets` aos
+pods do `MPIJob`.
