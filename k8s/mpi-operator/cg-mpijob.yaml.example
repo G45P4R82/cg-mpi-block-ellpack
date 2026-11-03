@@ -17,7 +17,7 @@ spec:
             kubernetes.io/arch: arm64
           containers:
             - name: cg-launcher
-              image: CG_IMAGE
+              image: srmarinho/cg-mpi:arm64
               imagePullPolicy: IfNotPresent
               securityContext:
                 runAsUser: 1000
@@ -46,7 +46,7 @@ spec:
             kubernetes.io/arch: arm64
           containers:
             - name: cg-worker
-              image: CG_IMAGE
+              image: srmarinho/cg-mpi:arm64
               imagePullPolicy: IfNotPresent
               securityContext:
                 runAsUser: 1000
