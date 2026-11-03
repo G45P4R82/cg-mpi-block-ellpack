@@ -1,0 +1,80 @@
+apiVersion: kubeflow.org/v2beta1
+kind: MPIJob
+metadata:
+  name: ${JOB_NAME}
+spec:
+  slotsPerWorker: 1
+  mpiImplementation: MPICH
+  sshAuthMountPath: /home/mpiuser/.ssh
+  launcherCreationPolicy: WaitForWorkersReady
+  runPolicy:
+    cleanPodPolicy: Running
+    activeDeadlineSeconds: 3600
+  mpiReplicaSpecs:
+    Launcher:
+      replicas: 1
+      template:
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: arm64
+          containers:
+            - name: cg-launcher
+              image: srmarinho/cg-mpi:arm64
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 1000
+              env:
+                - name: OMP_NUM_THREADS
+                  value: "${OMP_THREADS}"
+                - name: OMP_PROC_BIND
+                  value: close
+                - name: OMP_PLACES
+                  value: cores
+              args:
+                - mpirun
+                - -n
+                - "${MPI_PROCS}"
+                - /opt/cg/bin/cg_mpi
+                - --matrix
+                - /opt/cg/matrices/${MATRIX}/${MATRIX}.mtx
+                - --block-size
+                - "${BLOCK_SIZE}"
+                - --threads
+                - "${OMP_THREADS}"
+                - --tol
+                - "1e-8"
+                - --max-iters
+                - "10000"
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 1Gi
+    Worker:
+      replicas: ${MPI_PROCS}
+      template:
+        spec:
+          nodeSelector:
+            kubernetes.io/arch: arm64
+          containers:
+            - name: cg-worker
+              image: srmarinho/cg-mpi:arm64
+              imagePullPolicy: IfNotPresent
+              securityContext:
+                runAsUser: 1000
+              env:
+                - name: OMP_NUM_THREADS
+                  value: "${OMP_THREADS}"
+                - name: OMP_PROC_BIND
+                  value: close
+                - name: OMP_PLACES
+                  value: cores
+              command: [/usr/sbin/sshd]
+              args: [-De, -f, /home/mpiuser/.sshd_config]
+              readinessProbe:
+                tcpSocket:
+                  port: 2222
+                initialDelaySeconds: 2
+              resources:
+                limits:
+                  cpu: "${OMP_THREADS}"
+                  memory: 1Gi
