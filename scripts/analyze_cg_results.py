@@ -68,6 +68,24 @@ with metrics_path.open("w", newline="") as stream:
         writer.writerow({field: (f"{row[field]:.9g}" if isinstance(row[field], float) else row[field]) for field in fields})
 
 base = [row for row in stats if row["family"] == "base"]
+
+
+def annotate_point(axis, x, y, label, offset):
+    axis.annotate(
+        label,
+        (x, y),
+        xytext=offset,
+        textcoords="offset points",
+        fontsize=7,
+        bbox={"boxstyle": "round,pad=0.25", "fc": "white", "ec": "#999999", "alpha": 0.85},
+        arrowprops={"arrowstyle": "->", "alpha": 0.45},
+    )
+
+
+def add_story(fig, text):
+    fig.text(0.02, 0.015, text, fontsize=8.5, color="#333333")
+
+
 fig, axis = plt.subplots()
 for matrix in sorted({row["matrix"] for row in base}):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
@@ -79,21 +97,22 @@ for matrix in sorted({row["matrix"] for row in base}):
         capsize=4,
         label=matrix,
     )
-    best = min(values, key=lambda row: row["solve_mean_s"])
-    axis.annotate(
-        f"melhor: bloco {best['block_size']}",
-        (best["block_size"], best["solve_mean_s"]),
-        xytext=(5, 8),
-        textcoords="offset points",
-        fontsize=8,
-        arrowprops={"arrowstyle": "->", "alpha": 0.5},
-    )
+    for index, row in enumerate(values):
+        stage = "INICIO" if index == 0 else "FIM" if index == len(values) - 1 else "DURANTE"
+        annotate_point(
+            axis,
+            row["block_size"],
+            row["solve_mean_s"],
+            f"{stage}\nb={row['block_size']} | {row['solve_mean_s']:.3f}s\npad={row['padding_overhead'] * 100:.1f}%",
+            (4, 8 if index % 2 == 0 else -38),
+        )
 axis.set_xlabel("Block size")
 axis.set_ylabel("Tempo medio de solucao (s)")
-axis.set_title("Tempo por block size\nBlocos menores vencem por reduzir padding")
+axis.set_title("Tempo por block size\nCada ponto = media de 3 execucoes")
 axis.grid(alpha=0.25)
 axis.legend()
-fig.tight_layout()
+add_story(fig, "Leitura: inicio = bloco 4; durante = blocos 8/16; fim = bloco 32. O padding indica zeros adicionados pelo Block ELLPACK.")
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(plots_dir / "solve_time_by_block.png", dpi=160)
 plt.close(fig)
 
@@ -106,19 +125,21 @@ axis.errorbar(
     marker="o",
     capsize=4,
 )
-axis.annotate(
-    "mais processos nao ajudam\n neste tamanho de matriz",
-    (strong[-1]["mpi_processes"], strong[-1]["solve_mean_s"]),
-    xytext=(-105, 20),
-    textcoords="offset points",
-    fontsize=8,
-    arrowprops={"arrowstyle": "->", "alpha": 0.5},
-)
+for index, row in enumerate(strong):
+    stage = "INICIO" if index == 0 else "FIM" if index == len(strong) - 1 else "DURANTE"
+    annotate_point(
+        axis,
+        row["mpi_processes"],
+        row["solve_mean_s"],
+        f"{stage}\nMPI={row['mpi_processes']}\n{row['solve_mean_s']:.3f}s",
+        (-48, 10 if index % 2 == 0 else -35),
+    )
 axis.set_xlabel("Processos MPI")
 axis.set_ylabel("Tempo medio de solucao (s)")
-axis.set_title("Strong scaling: bcsstk16, block 8\nA comunicacao supera o paralelismo")
+axis.set_title("Strong scaling: bcsstk16, block 8\nCada ponto = media de 3 execucoes")
 axis.grid(alpha=0.25)
-fig.tight_layout()
+add_story(fig, "Leitura: inicio = 1 processo; durante = 2; fim = 4. O tempo cresce porque a sincronizacao MPI custa mais que o paralelismo ganho.")
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(plots_dir / "strong_scaling_time.png", dpi=160)
 plt.close(fig)
 
@@ -126,14 +147,22 @@ fig, axis = plt.subplots()
 axis.plot([row["mpi_processes"] for row in strong], [row["speedup"] for row in strong], "o-", label="Speedup")
 axis.plot([row["mpi_processes"] for row in strong], [row["efficiency"] for row in strong], "s-", label="Eficiencia")
 axis.plot([row["mpi_processes"] for row in strong], [row["mpi_processes"] for row in strong], "--", color="gray", label="Ideal")
-axis.annotate("speedup abaixo do ideal\n(overhead MPI)", (4, strong[-1]["speedup"]), xytext=(-110, -35), textcoords="offset points", fontsize=8, arrowprops={"arrowstyle": "->", "alpha": 0.5})
+for index, row in enumerate(strong):
+    annotate_point(
+        axis,
+        row["mpi_processes"],
+        row["speedup"],
+        f"MPI={row['mpi_processes']}\nS={row['speedup']:.3f}x\nE={row['efficiency']:.3f}",
+        (-42, 10 if index % 2 == 0 else -38),
+    )
 axis.set_xlabel("Processos MPI")
 axis.set_ylabel("Fator")
-axis.set_title("Strong scaling: speedup e eficiencia")
+axis.set_title("Strong scaling: speedup e eficiencia\nCirculos = speedup | quadrados = eficiencia")
 axis.set_xticks([row["mpi_processes"] for row in strong])
 axis.grid(alpha=0.25)
 axis.legend()
-fig.tight_layout()
+add_story(fig, "Leitura: a linha pontilhada e o ideal; a distancia entre ela e os circulos mostra o overhead MPI. A eficiencia usa a escala da direita conceitual: 1,0 = 100%.")
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(plots_dir / "strong_scaling_speedup_efficiency.png", dpi=160)
 plt.close(fig)
 
@@ -142,14 +171,22 @@ fig, axis = plt.subplots()
 axis.plot([row["omp_threads"] for row in hybrid], [row["speedup"] for row in hybrid], "o-", label="Speedup")
 axis.plot([row["omp_threads"] for row in hybrid], [row["efficiency"] for row in hybrid], "s-", label="Eficiencia")
 axis.plot([row["omp_threads"] for row in hybrid], [row["omp_threads"] for row in hybrid], "--", color="gray", label="Ideal")
-axis.annotate("ganho real: 1,447x\ncom 4 threads", (4, hybrid[-1]["speedup"]), xytext=(-105, 18), textcoords="offset points", fontsize=8, arrowprops={"arrowstyle": "->", "alpha": 0.5})
+for index, row in enumerate(hybrid):
+    annotate_point(
+        axis,
+        row["omp_threads"],
+        row["speedup"],
+        f"{'INICIO' if index == 0 else 'FIM' if index == len(hybrid) - 1 else 'DURANTE'}\nT={row['omp_threads']}\nS={row['speedup']:.3f}x\nE={row['efficiency']:.3f}",
+        (-42, 10 if index % 2 == 0 else -42),
+    )
 axis.set_xlabel("Threads OpenMP")
 axis.set_ylabel("Fator")
-axis.set_title("Escala hibrida: speedup e eficiencia")
+axis.set_title("Escala hibrida: speedup e eficiencia\nMPI fixo em 2 processos")
 axis.set_xticks([row["omp_threads"] for row in hybrid])
 axis.grid(alpha=0.25)
 axis.legend()
-fig.tight_layout()
+add_story(fig, "Leitura: inicio = 1 thread; durante = 2; fim = 4. O speedup cresce, mas fica abaixo do ideal porque as threads disputam memoria.")
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(plots_dir / "hybrid_scaling_speedup_efficiency.png", dpi=160)
 plt.close(fig)
 
@@ -157,14 +194,22 @@ fig, axis = plt.subplots()
 for matrix in sorted({row["matrix"] for row in base}):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
     axis.plot([row["block_size"] for row in values], [row["padding_overhead"] * 100 for row in values], "o-", label=matrix)
-    lowest = min(values, key=lambda row: row["padding_overhead"])
-    axis.annotate(f"min {lowest['padding_overhead'] * 100:.1f}%", (lowest["block_size"], lowest["padding_overhead"] * 100), xytext=(5, 8), textcoords="offset points", fontsize=8)
+    for index, row in enumerate(values):
+        stage = "INICIO" if index == 0 else "FIM" if index == len(values) - 1 else "DURANTE"
+        annotate_point(
+            axis,
+            row["block_size"],
+            row["padding_overhead"] * 100,
+            f"{stage}\nb={row['block_size']}\npad={row['padding_overhead'] * 100:.1f}%",
+            (4, 8 if index % 2 == 0 else -32),
+        )
 axis.set_xlabel("Block size")
 axis.set_ylabel("Padding (%)")
-axis.set_title("Overhead de padding do Block ELLPACK\nBlocos maiores preenchem mais zeros")
+axis.set_title("Overhead de padding do Block ELLPACK\nCada ponto = zeros adicionais na representacao")
 axis.grid(alpha=0.25)
 axis.legend()
-fig.tight_layout()
+add_story(fig, "Leitura: inicio = bloco 4; durante = 8/16; fim = 32. Quanto maior o padding, mais memoria e leituras nao uteis no SpMV.")
+fig.tight_layout(rect=(0, 0.07, 1, 1))
 fig.savefig(plots_dir / "padding_by_block.png", dpi=160)
 plt.close(fig)
 

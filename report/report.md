@@ -219,6 +219,24 @@ matriz.
 
 ### Graficos
 
+#### Como ler os graficos
+
+Todos os pontos representam a media de tres execucoes. As barras de erro
+representam o desvio padrao entre as repeticoes. As caixas indicam a etapa da
+historia do experimento:
+
+```text
+INICIO   configuracao de referencia
+DURANTE  configuracao intermediaria
+FIM      maior block size, numero de processos ou numero de threads
+```
+
+Nos graficos de tempo, o valor dentro da caixa e o tempo medio em segundos.
+Nos graficos de escala, `S` significa speedup e `E` significa eficiencia. A
+linha pontilhada mostra o comportamento ideal: dobrar os recursos deveria
+dobrar o speedup. No grafico de padding, `pad` e a porcentagem de zeros
+adicionados pelo Block ELLPACK, nao zeros existentes no dataset original.
+
 ![Tempo por block size](../results/plots/tvbox/solve_time_by_block.png)
 
 **Historia do grafico:** o bloco 4 foi o melhor para as tres matrizes. Ao
