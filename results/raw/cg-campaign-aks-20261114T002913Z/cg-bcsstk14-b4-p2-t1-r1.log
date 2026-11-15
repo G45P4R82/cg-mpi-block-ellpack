@@ -1,0 +1,28 @@
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk14-b4-p2-t1-r1-launcher
+Resolved cg-bcsstk14-b4-p2-t1-r1-worker-0.cg-bcsstk14-b4-p2-t1-r1.hpc-cg.svc
+Resolved cg-bcsstk14-b4-p2-t1-r1-worker-1.cg-bcsstk14-b4-p2-t1-r1.hpc-cg.svc
+Warning: Permanently added '[cg-bcsstk14-b4-p2-t1-r1-worker-0.cg-bcsstk14-b4-p2-t1-r1.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[cg-bcsstk14-b4-p2-t1-r1-worker-1.cg-bcsstk14-b4-p2-t1-r1.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+matrix=/opt/cg/matrices/bcsstk14/bcsstk14.mtx
+rows=1806
+nnz=63454
+block_size=4
+mpi_processes=2
+omp_threads=1
+read_time_s=0.0140741
+conversion_time_s=0.0056124
+solve_time_s=3.4529
+iterations=5557
+relative_residual=8.56688e-09
+solution_error=0.148652
+padding_overhead=0.686641

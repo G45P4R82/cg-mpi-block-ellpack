@@ -18,12 +18,14 @@ for path in sorted(raw_dir.rglob("*.log")):
     if not match:
         continue
     matrix, block, mpi, threads, repeat = match.groups()
+    family = "hybrid" if "-hybrid" in path.stem else "strong" if "-strong" in path.stem else "base"
     values.update({
         "matrix": matrix,
         "block_size": int(block),
         "mpi_processes": int(mpi),
         "omp_threads": int(threads),
         "repeat": int(repeat),
+        "family": family,
         "source": str(path),
     })
     rows.append(values)

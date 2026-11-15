@@ -1,0 +1,7 @@
+NAME                             STATUS   ROLES    AGE     VERSION   INTERNAL-IP   EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION             CONTAINER-RUNTIME
+aks-system-34804217-vmss000000   Ready    <none>   5d12h   v1.36.4   10.224.0.4    <none>        Ubuntu 24.04.5 LTS   6.8.0-1073-azure (arm64)   containerd://2.3.7-4
+aks-user-34804217-vmss000000     Ready    <none>   5d11h   v1.36.4   10.224.0.5    <none>        Ubuntu 24.04.5 LTS   6.8.0-1073-azure (arm64)   containerd://2.3.7-4
+aks-user-34804217-vmss000001     Ready    <none>   5d11h   v1.36.4   10.224.0.8    <none>        Ubuntu 24.04.5 LTS   6.8.0-1073-azure (arm64)   containerd://2.3.7-4
+aks-user-34804217-vmss000002     Ready    <none>   5d11h   v1.36.4   10.224.0.7    <none>        Ubuntu 24.04.5 LTS   6.8.0-1073-azure (arm64)   containerd://2.3.7-4
+aks-user-34804217-vmss000003     Ready    <none>   5d11h   v1.36.4   10.224.0.6    <none>        Ubuntu 24.04.5 LTS   6.8.0-1073-azure (arm64)   containerd://2.3.7-4
+aks-user-34804217-vmss000004     Ready    <none>   5d11h   v1.36.4   10.224.0.9    <none>        Ubuntu 24.04.5 LTS   6.8.0-1073-azure (arm64)   containerd://2.3.7-4

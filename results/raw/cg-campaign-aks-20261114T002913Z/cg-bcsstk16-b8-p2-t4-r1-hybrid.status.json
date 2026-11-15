@@ -1,0 +1,155 @@
+{
+    "apiVersion": "kubeflow.org/v2beta1",
+    "kind": "MPIJob",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kubeflow.org/v2beta1\",\"kind\":\"MPIJob\",\"metadata\":{\"annotations\":{},\"name\":\"cg-bcsstk16-b8-p2-t4-r1-hybrid\",\"namespace\":\"hpc-cg\"},\"spec\":{\"launcherCreationPolicy\":\"WaitForWorkersReady\",\"mpiImplementation\":\"MPICH\",\"mpiReplicaSpecs\":{\"Launcher\":{\"replicas\":1,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"mpirun\",\"-n\",\"2\",\"/opt/cg/bin/cg_mpi\",\"--matrix\",\"/opt/cg/matrices/bcsstk16/bcsstk16.mtx\",\"--block-size\",\"8\",\"--threads\",\"4\",\"--tol\",\"1e-8\",\"--max-iters\",\"10000\"],\"env\":[{\"name\":\"OMP_NUM_THREADS\",\"value\":\"4\"},{\"name\":\"OMP_PROC_BIND\",\"value\":\"close\"},{\"name\":\"OMP_PLACES\",\"value\":\"cores\"}],\"image\":\"srmarinho/cg-mpi:arm64\",\"imagePullPolicy\":\"Always\",\"name\":\"cg-launcher\",\"resources\":{\"limits\":{\"cpu\":\"1\",\"memory\":\"1Gi\"}},\"securityContext\":{\"runAsUser\":1000}}],\"nodeSelector\":{\"kubernetes.io/arch\":\"arm64\"}}}},\"Worker\":{\"replicas\":2,\"template\":{\"spec\":{\"containers\":[{\"args\":[\"-De\",\"-f\",\"/home/mpiuser/.sshd_config\"],\"command\":[\"/usr/sbin/sshd\"],\"env\":[{\"name\":\"OMP_NUM_THREADS\",\"value\":\"4\"},{\"name\":\"OMP_PROC_BIND\",\"value\":\"close\"},{\"name\":\"OMP_PLACES\",\"value\":\"cores\"}],\"image\":\"srmarinho/cg-mpi:arm64\",\"imagePullPolicy\":\"Always\",\"name\":\"cg-worker\",\"readinessProbe\":{\"initialDelaySeconds\":2,\"tcpSocket\":{\"port\":2222}},\"resources\":{\"limits\":{\"cpu\":\"4\",\"memory\":\"1Gi\"}},\"securityContext\":{\"runAsUser\":1000}}],\"nodeSelector\":{\"kubernetes.io/arch\":\"arm64\"}}}}},\"runPolicy\":{\"activeDeadlineSeconds\":3600,\"cleanPodPolicy\":\"Running\"},\"slotsPerWorker\":1,\"sshAuthMountPath\":\"/home/mpiuser/.ssh\"}}\n"
+        },
+        "creationTimestamp": "2026-11-14T05:09:02Z",
+        "generation": 1,
+        "name": "cg-bcsstk16-b8-p2-t4-r1-hybrid",
+        "namespace": "hpc-cg",
+        "resourceVersion": "9997108",
+        "uid": "ab2c48fe-1ef4-458c-8da2-e39478454344"
+    },
+    "spec": {
+        "launcherCreationPolicy": "WaitForWorkersReady",
+        "mpiImplementation": "MPICH",
+        "mpiReplicaSpecs": {
+            "Launcher": {
+                "replicas": 1,
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "mpirun",
+                                    "-n",
+                                    "2",
+                                    "/opt/cg/bin/cg_mpi",
+                                    "--matrix",
+                                    "/opt/cg/matrices/bcsstk16/bcsstk16.mtx",
+                                    "--block-size",
+                                    "8",
+                                    "--threads",
+                                    "4",
+                                    "--tol",
+                                    "1e-8",
+                                    "--max-iters",
+                                    "10000"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "OMP_NUM_THREADS",
+                                        "value": "4"
+                                    },
+                                    {
+                                        "name": "OMP_PROC_BIND",
+                                        "value": "close"
+                                    },
+                                    {
+                                        "name": "OMP_PLACES",
+                                        "value": "cores"
+                                    }
+                                ],
+                                "image": "srmarinho/cg-mpi:arm64",
+                                "imagePullPolicy": "Always",
+                                "name": "cg-launcher",
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "1",
+                                        "memory": "1Gi"
+                                    }
+                                },
+                                "securityContext": {
+                                    "runAsUser": 1000
+                                }
+                            }
+                        ],
+                        "nodeSelector": {
+                            "kubernetes.io/arch": "arm64"
+                        }
+                    }
+                }
+            },
+            "Worker": {
+                "replicas": 2,
+                "template": {
+                    "spec": {
+                        "containers": [
+                            {
+                                "args": [
+                                    "-De",
+                                    "-f",
+                                    "/home/mpiuser/.sshd_config"
+                                ],
+                                "command": [
+                                    "/usr/sbin/sshd"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "OMP_NUM_THREADS",
+                                        "value": "4"
+                                    },
+                                    {
+                                        "name": "OMP_PROC_BIND",
+                                        "value": "close"
+                                    },
+                                    {
+                                        "name": "OMP_PLACES",
+                                        "value": "cores"
+                                    }
+                                ],
+                                "image": "srmarinho/cg-mpi:arm64",
+                                "imagePullPolicy": "Always",
+                                "name": "cg-worker",
+                                "readinessProbe": {
+                                    "initialDelaySeconds": 2,
+                                    "tcpSocket": {
+                                        "port": 2222
+                                    }
+                                },
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "4",
+                                        "memory": "1Gi"
+                                    }
+                                },
+                                "securityContext": {
+                                    "runAsUser": 1000
+                                }
+                            }
+                        ],
+                        "nodeSelector": {
+                            "kubernetes.io/arch": "arm64"
+                        }
+                    }
+                }
+            }
+        },
+        "runLauncherAsWorker": false,
+        "runPolicy": {
+            "activeDeadlineSeconds": 3600,
+            "cleanPodPolicy": "Running",
+            "suspend": false
+        },
+        "slotsPerWorker": 1,
+        "sshAuthMountPath": "/home/mpiuser/.ssh"
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-11-14T05:09:02Z",
+                "lastUpdateTime": "2026-11-14T05:09:02Z",
+                "message": "MPIJob hpc-cg/cg-bcsstk16-b8-p2-t4-r1-hybrid is created.",
+                "reason": "MPIJobCreated",
+                "status": "True",
+                "type": "Created"
+            }
+        ],
+        "replicaStatuses": {
+            "Worker": {}
+        },
+        "startTime": "2026-11-14T05:09:02Z"
+    }
+}

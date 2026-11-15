@@ -1,0 +1,2 @@
+NAME                            READY   STATUS    RESTARTS   AGE   IP             NODE                           NOMINATED NODE   READINESS GATES
+mpi-operator-5bf86f67f5-fx979   1/1     Running   0          17h   10.244.5.152   aks-user-34804217-vmss000004   <none>           <none>

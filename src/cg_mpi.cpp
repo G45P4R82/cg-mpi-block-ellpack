@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <numeric>
+#include <omp.h>
 #include <stdexcept>
 #include <string>
 
@@ -31,11 +32,16 @@ static Args parse_args(int argc, char **argv) {
         else throw std::runtime_error("opcao desconhecida: " + option);
     }
     if (args.matrix.empty()) throw std::runtime_error("--matrix e obrigatorio");
+    if (args.block_size < 1) throw std::runtime_error("--block-size deve ser positivo");
+    if (args.threads < 1) throw std::runtime_error("--threads deve ser positivo");
+    if (args.max_iterations < 1) throw std::runtime_error("--max-iters deve ser positivo");
+    if (args.tolerance <= 0.0) throw std::runtime_error("--tol deve ser positivo");
     return args;
 }
 
-static double dot(const std::vector<double> &a, const std::vector<double> &b) {
+static double dot(const std::vector<double> &a, const std::vector<double> &b, int threads) {
     double result = 0.0;
+    #pragma omp parallel for schedule(static) num_threads(threads) reduction(+:result)
     for (std::size_t i = 0; i < a.size(); ++i) result += a[i] * b[i];
     return result;
 }
@@ -67,7 +73,7 @@ int main(int argc, char **argv) {
         matrix.spmv(x_global, b_local, first, local_rows, args.threads);
         r_local = b_local;
         p_local = r_local;
-        double local_rho = dot(r_local, r_local), rho = 0.0;
+        double local_rho = dot(r_local, r_local, args.threads), rho = 0.0;
         MPI_Allreduce(&local_rho, &rho, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
         double norm_b = std::sqrt(rho);
         int iterations = 0;
@@ -77,19 +83,21 @@ int main(int argc, char **argv) {
         for (; iterations < args.max_iterations && norm_b > 0.0; ++iterations) {
             MPI_Allgatherv(p_local.data(), local_rows, MPI_DOUBLE, p_global.data(), counts.data(), displacements.data(), MPI_DOUBLE, MPI_COMM_WORLD);
             matrix.spmv(p_global, q_local, first, local_rows, args.threads);
-            double local_pq = dot(p_local, q_local), pq = 0.0;
+            double local_pq = dot(p_local, q_local, args.threads), pq = 0.0;
             MPI_Allreduce(&local_pq, &pq, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             if (!(pq > 0.0)) throw std::runtime_error("p^T A p nao positivo; matriz pode nao ser SPD");
             const double alpha = rho / pq;
+            #pragma omp parallel for schedule(static) num_threads(args.threads)
             for (int i = 0; i < local_rows; ++i) {
                 x_local[i] += alpha * p_local[i];
                 r_local[i] -= alpha * q_local[i];
             }
-            double local_new_rho = dot(r_local, r_local), new_rho = 0.0;
+            double local_new_rho = dot(r_local, r_local, args.threads), new_rho = 0.0;
             MPI_Allreduce(&local_new_rho, &new_rho, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
             relative_residual = std::sqrt(new_rho) / norm_b;
             if (relative_residual <= args.tolerance) { ++iterations; break; }
             const double beta = new_rho / rho;
+            #pragma omp parallel for schedule(static) num_threads(args.threads)
             for (int i = 0; i < local_rows; ++i) p_local[i] = r_local[i] + beta * p_local[i];
             rho = new_rho;
         }
@@ -99,6 +107,7 @@ int main(int argc, char **argv) {
         std::vector<double> ax_local;
         matrix.spmv(x_check, ax_local, first, local_rows, args.threads);
         double local_residual_error = 0.0, local_solution_error = 0.0;
+        #pragma omp parallel for schedule(static) num_threads(args.threads) reduction(+:local_residual_error,local_solution_error)
         for (int i = 0; i < local_rows; ++i) {
             const double residual = ax_local[i] - b_local[i];
             local_residual_error += residual * residual;

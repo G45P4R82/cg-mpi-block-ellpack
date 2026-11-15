@@ -20,7 +20,7 @@ spec:
           containers:
             - name: cg-launcher
               image: srmarinho/cg-mpi:arm64
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               securityContext:
                 runAsUser: 1000
               env:
@@ -58,7 +58,7 @@ spec:
           containers:
             - name: cg-worker
               image: srmarinho/cg-mpi:arm64
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               securityContext:
                 runAsUser: 1000
               env:
@@ -76,5 +76,5 @@ spec:
                 initialDelaySeconds: 2
               resources:
                 limits:
-                  cpu: "${OMP_THREADS}"
+                  cpu: "${WORKER_CPU}"
                   memory: 1Gi

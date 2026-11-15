@@ -1,0 +1,28 @@
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b16-p2-t1-r1-launcher
+Resolved cg-bcsstk16-b16-p2-t1-r1-worker-0.cg-bcsstk16-b16-p2-t1-r1.hpc-cg.svc
+Resolved cg-bcsstk16-b16-p2-t1-r1-worker-1.cg-bcsstk16-b16-p2-t1-r1.hpc-cg.svc
+Warning: Permanently added '[cg-bcsstk16-b16-p2-t1-r1-worker-0.cg-bcsstk16-b16-p2-t1-r1.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[cg-bcsstk16-b16-p2-t1-r1-worker-1.cg-bcsstk16-b16-p2-t1-r1.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+matrix=/opt/cg/matrices/bcsstk16/bcsstk16.mtx
+rows=4884
+nnz=290378
+block_size=16
+mpi_processes=2
+omp_threads=1
+read_time_s=0.324046
+conversion_time_s=0.0733699
+solve_time_s=2.35902
+iterations=314
+relative_residual=9.81579e-09
+solution_error=0.123091
+padding_overhead=0.752878
