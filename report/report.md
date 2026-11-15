@@ -35,19 +35,179 @@ aproximadamente 1,8 GiB de memoria disponivel.
 O codigo foi compilado na imagem ARM64 com `mpicxx`, OpenMP e OpenBLAS. As
 operacoes vetoriais do CG sao implementadas diretamente em C++ com OpenMP.
 
-## Metodologia
+## Datasets e problema fisico
 
-Foram usadas as matrizes SuiteSparse preservadas no repositorio:
+Os dados usados neste trabalho sao matrizes de rigidez estrutural da UF Sparse
+Matrix Collection, atualmente conhecida como SuiteSparse Matrix Collection.
+Elas nao sao tabelas de observacoes ou imagens: sao modelos numericos
+resultantes de discretizacoes de estruturas de engenharia. Cada linha e cada
+coluna representa um grau de liberdade do modelo, e cada valor representa a
+interacao entre dois graus de liberdade.
+
+| Dataset | Problema original | Dimensao | Entradas no arquivo | `nnz` expandido | Densidade expandida |
+|---|---|---:|---:|---:|---:|
+| `bcsstk34` | Matriz de rigidez de um problema de flambagem NASTRAN da Boeing | 588 x 588 | 11.003 | 21.418 | 6,195% |
+| `bcsstk14` | Matriz de rigidez do teto do Omni Coliseum, Atlanta | 1.806 x 1.806 | 32.630 | 63.454 | 1,945% |
+| `bcsstk16` | Matriz de rigidez de uma barragem do Corps of Engineers | 4.884 x 4.884 | 147.631 | 290.378 | 1,217% |
+
+Os tres arquivos possuem cabecalho Matrix Market:
 
 ```text
-bcsstk34, bcsstk14, bcsstk16
+matrix coordinate real symmetric
 ```
 
-O estudo de Block ELLPACK usou blocos `4`, `8`, `16` e `32`, com dois
-processos MPI, uma thread OpenMP e tres repeticoes por configuracao. O estudo
-de strong scaling usou `bcsstk16`, bloco `8`, uma thread e `1`, `2` e `4`
-processos MPI. O estudo hibrido manteve dois processos MPI e variou entre
-`1`, `2` e `4` threads OpenMP.
+Isso significa que os valores sao reais, estao armazenados em coordenadas
+`(linha, coluna, valor)` e a matriz e simetrica. O arquivo armazena apenas a
+parte triangular. Durante a leitura, o programa expande cada entrada fora da
+diagonal:
+
+```text
+A[i][j] = valor
+A[j][i] = valor
+```
+
+A diagonal nao e duplicada. Por isso, a quantidade de entradas do arquivo
+original e menor que o `nnz` usado pelo solver depois da expansao. Essa
+expansao e necessaria para que o produto matriz-vetor represente a matriz
+completa usada pelo Gradiente Conjugado.
+
+O problema numerico resolvido e:
+
+```text
+A x = b
+```
+
+Para validar o solver, o projeto define uma solucao conhecida `x_true` como um
+vetor de uns e calcula:
+
+```text
+b = A x_true
+```
+
+O Gradiente Conjugado recebe `A` e `b` e tenta reconstruir `x_true`. Assim, os
+experimentos medem simultaneamente a corretude da solucao e o desempenho do
+processamento esparso. A baixa densidade das matrizes explica por que o
+produto matriz-vetor e limitado principalmente por acesso a memoria, e nao por
+operacoes aritmeticas.
+
+O `nnz` expandido indica quantas entradas reais existem na matriz completa. Ja
+o padding mostrado nos resultados e introduzido pelo formato Block ELLPACK:
+cada grupo de linhas reserva o mesmo numero de blocos, preenchendo posicoes
+ausentes com zeros. Portanto, o padding nao pertence ao dataset original; ele
+mede o custo adicional da representacao escolhida pelo projeto.
+
+As fontes originais sao:
+
+```text
+https://www.cise.ufl.edu/research/sparse/MM/Boeing/bcsstk34.tar.gz
+https://www.cise.ufl.edu/research/sparse/MM/HB/bcsstk14.tar.gz
+https://www.cise.ufl.edu/research/sparse/MM/HB/bcsstk16.tar.gz
+```
+
+## Metodologia
+
+### Dados de entrada e pipeline numerico
+
+Os experimentos nao operam sobre os nomes `bcsstk34`, `bcsstk14` e `bcsstk16`
+como se fossem categorias abstratas. Cada nome identifica um arquivo `.mtx`
+concreto, contendo uma matriz de rigidez estrutural real. O pipeline executado
+para cada arquivo foi:
+
+```text
+arquivo Matrix Market
+        |
+        v
+leitura das coordenadas (linha, coluna, valor)
+        |
+        v
+expansao da simetria A[i][j] = A[j][i]
+        |
+        v
+construcao do Block ELLPACK
+        |
+        v
+b = A * x_true, com x_true igual a vetor de uns
+        |
+        v
+particionamento das linhas entre processos MPI
+        |
+        v
+SpMV + produtos escalares + atualizacoes do CG
+```
+
+Cada linha e coluna da matriz representa um grau de liberdade do modelo
+estrutural. Os valores numericos sao coeficientes da matriz de rigidez; os
+zeros representam pares de graus de liberdade que nao possuem uma ligacao
+direta no modelo discretizado. Por isso, a matriz e grande e esparsa, e o
+principal nucleo computacional e o produto matriz-vetor esparso (SpMV).
+
+| Dataset | Aplicacao representada | Dimensao | Entradas lidas | `nnz` apos simetria | Densidade apos simetria |
+|---|---|---:|---:|---:|---:|
+| `bcsstk34` | Flambagem NASTRAN de uma estrutura Boeing | 588 x 588 | 11.003 | 21.418 | 6,195% |
+| `bcsstk14` | Rigidez do teto do Omni Coliseum, Atlanta | 1.806 x 1.806 | 32.630 | 63.454 | 1,945% |
+| `bcsstk16` | Rigidez de uma barragem do Corps of Engineers | 4.884 x 4.884 | 147.631 | 290.378 | 1,217% |
+
+`Entradas lidas` e a quantidade de coordenadas gravadas no arquivo triangular
+original. Como o cabecalho declara `symmetric`, o parser cria a entrada
+espelhada para cada elemento fora da diagonal. A diagonal e inserida uma unica
+vez. O `nnz` apos simetria e a quantidade efetivamente usada pelo solver.
+
+Depois da leitura, as entradas sao agrupadas em blocos quadrados de tamanho
+fixo. Para cada grupo de linhas, o Block ELLPACK reserva o mesmo numero de
+blocos de colunas. Quando uma linha nao possui uma entrada para uma posicao
+reservada, a posicao recebe zero de padding. Esse padding nao esta no dataset
+original: ele e o custo da estrutura de dados escolhida para tentar melhorar a
+regularidade do acesso durante o SpMV.
+
+O vetor `b` nao vem de um arquivo externo. Ele e gerado de forma controlada
+para que exista uma resposta conhecida:
+
+```text
+x_true = [1, 1, ..., 1]
+b = A * x_true
+x_0 = [0, 0, ..., 0]
+```
+
+O Gradiente Conjugado recebe `A` e `b`, inicia com `x_0` e tenta recuperar
+`x_true`. Assim, o experimento mede duas coisas ao mesmo tempo: se a
+implementacao paralela calcula a resposta correta e quanto tempo ela leva.
+
+### Configuracoes experimentais
+
+O estudo foi dividido em tres familias. Todas as configuracoes tiveram tres
+repeticoes, usando a mesma tolerancia `1e-8` e o mesmo limite de `10000`
+iteracoes.
+
+**Estudo do Block ELLPACK:** para cada uma das tres matrizes, foram usados
+block sizes `4`, `8`, `16` e `32`, com dois processos MPI e uma thread OpenMP
+por processo. Isso produz:
+
+```text
+3 matrizes x 4 block sizes x 3 repeticoes = 36 execucoes
+```
+
+**Strong scaling MPI:** foi usada `bcsstk16` com block size `8` e uma thread
+OpenMP por processo. O numero de processos MPI foi `1`, `2` e `4`, com tres
+repeticoes por ponto:
+
+```text
+3 configuracoes MPI x 3 repeticoes = 9 execucoes
+```
+
+**Escala hibrida MPI/OpenMP:** foi usada `bcsstk16` com block size `8` e dois
+processos MPI. O numero de threads OpenMP foi `1`, `2` e `4`, novamente com
+tres repeticoes:
+
+```text
+3 configuracoes OpenMP x 3 repeticoes = 9 execucoes
+```
+
+No total, a campanha possui `36 + 9 + 9 = 54` execucoes.
+
+Em cada processo MPI, o vetor global necessario ao SpMV e formado por
+`MPI_Allgatherv`. Os produtos escalares do CG usam `MPI_Allreduce`. Dentro de
+cada processo, o SpMV, os produtos escalares e as atualizacoes dos vetores
+`x`, `r` e `p` usam OpenMP com `schedule(static)`.
 
 O speedup foi calculado por:
 
@@ -127,13 +287,41 @@ matriz.
 
 ![Tempo por block size](../results/plots/tvbox/solve_time_by_block.png)
 
+**Historia do grafico:** o bloco 4 foi o melhor para as tres matrizes. Ao
+aumentar o bloco, o formato passa a reservar mais posicoes que nao existem na
+matriz original. O resultado e mais trabalho no SpMV e mais movimentacao de
+memoria, especialmente em `bcsstk14`.
+
 ![Strong scaling](../results/plots/tvbox/strong_scaling_time.png)
+
+**Historia do grafico:** aumentar de 1 para 2 e 4 processos MPI nao reduziu o
+tempo neste problema. Cada iteracao precisa reunir `p` com `MPI_Allgatherv` e
+sincronizar produtos escalares com `MPI_Allreduce`. Para `bcsstk16`, esse custo
+de comunicacao foi maior que o ganho do processamento paralelo.
 
 ![Speedup e eficiencia MPI](../results/plots/tvbox/strong_scaling_speedup_efficiency.png)
 
+**Historia do grafico:** a linha ideal subiria proporcionalmente ao numero de
+processos. A curva medida fica abaixo de 1 a partir de dois processos, e a
+eficiencia cai para `0,230` com quatro processos. Isso mostra que adicionar
+processos nao e automaticamente uma aceleracao: o tamanho da matriz e a
+frequencia das sincronizacoes dominam o tempo.
+
 ![Speedup e eficiencia OpenMP](../results/plots/tvbox/hybrid_scaling_speedup_efficiency.png)
 
+**Historia do grafico:** dentro de cada processo, OpenMP foi mais efetivo que
+a escala MPI neste caso. Duas threads produziram speedup de `1,299x` e quatro
+threads chegaram a `1,447x`. A eficiencia, porem, caiu para `0,362`, porque as
+threads compartilham largura de banda e o problema nao possui trabalho
+suficiente para escalar idealmente.
+
 ![Padding Block ELLPACK](../results/plots/tvbox/padding_by_block.png)
+
+**Historia do grafico:** o padding cresce com o tamanho do bloco em todas as
+matrizes. Em `bcsstk16`, por exemplo, ele vai de `56,28%` no bloco 4 para
+`83,15%` no bloco 32. Esses zeros nao pertencem ao problema estrutural; sao
+espaco adicional introduzido pelo formato Block ELLPACK para manter acesso
+regular.
 
 ### Custos observados
 

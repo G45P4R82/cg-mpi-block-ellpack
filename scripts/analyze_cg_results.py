@@ -68,9 +68,10 @@ with metrics_path.open("w", newline="") as stream:
         writer.writerow({field: (f"{row[field]:.9g}" if isinstance(row[field], float) else row[field]) for field in fields})
 
 base = [row for row in stats if row["family"] == "base"]
+fig, axis = plt.subplots()
 for matrix in sorted({row["matrix"] for row in base}):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
-    plt.errorbar(
+    axis.errorbar(
         [row["block_size"] for row in values],
         [row["solve_mean_s"] for row in values],
         yerr=[row["solve_stddev_s"] for row in values],
@@ -78,34 +79,54 @@ for matrix in sorted({row["matrix"] for row in base}):
         capsize=4,
         label=matrix,
     )
-plt.xlabel("Block size")
-plt.ylabel("Tempo medio de solucao (s)")
-plt.title("Tempo por block size")
-plt.grid(alpha=0.25)
-plt.legend()
-plt.tight_layout()
-plt.savefig(plots_dir / "solve_time_by_block.png", dpi=160)
-plt.close()
+    best = min(values, key=lambda row: row["solve_mean_s"])
+    axis.annotate(
+        f"melhor: bloco {best['block_size']}",
+        (best["block_size"], best["solve_mean_s"]),
+        xytext=(5, 8),
+        textcoords="offset points",
+        fontsize=8,
+        arrowprops={"arrowstyle": "->", "alpha": 0.5},
+    )
+axis.set_xlabel("Block size")
+axis.set_ylabel("Tempo medio de solucao (s)")
+axis.set_title("Tempo por block size\nBlocos menores vencem por reduzir padding")
+axis.grid(alpha=0.25)
+axis.legend()
+fig.tight_layout()
+fig.savefig(plots_dir / "solve_time_by_block.png", dpi=160)
+plt.close(fig)
 
 strong = sorted((row for row in stats if row["family"] == "strong"), key=lambda row: row["mpi_processes"])
-plt.errorbar(
+fig, axis = plt.subplots()
+axis.errorbar(
     [row["mpi_processes"] for row in strong],
     [row["solve_mean_s"] for row in strong],
     yerr=[row["solve_stddev_s"] for row in strong],
     marker="o",
     capsize=4,
 )
-plt.xlabel("Processos MPI")
-plt.ylabel("Tempo medio de solucao (s)")
-plt.title("Strong scaling: bcsstk16, block 8")
-plt.grid(alpha=0.25)
-plt.tight_layout()
-plt.savefig(plots_dir / "strong_scaling_time.png", dpi=160)
-plt.close()
+axis.annotate(
+    "mais processos nao ajudam\n neste tamanho de matriz",
+    (strong[-1]["mpi_processes"], strong[-1]["solve_mean_s"]),
+    xytext=(-105, 20),
+    textcoords="offset points",
+    fontsize=8,
+    arrowprops={"arrowstyle": "->", "alpha": 0.5},
+)
+axis.set_xlabel("Processos MPI")
+axis.set_ylabel("Tempo medio de solucao (s)")
+axis.set_title("Strong scaling: bcsstk16, block 8\nA comunicacao supera o paralelismo")
+axis.grid(alpha=0.25)
+fig.tight_layout()
+fig.savefig(plots_dir / "strong_scaling_time.png", dpi=160)
+plt.close(fig)
 
 fig, axis = plt.subplots()
 axis.plot([row["mpi_processes"] for row in strong], [row["speedup"] for row in strong], "o-", label="Speedup")
 axis.plot([row["mpi_processes"] for row in strong], [row["efficiency"] for row in strong], "s-", label="Eficiencia")
+axis.plot([row["mpi_processes"] for row in strong], [row["mpi_processes"] for row in strong], "--", color="gray", label="Ideal")
+axis.annotate("speedup abaixo do ideal\n(overhead MPI)", (4, strong[-1]["speedup"]), xytext=(-110, -35), textcoords="offset points", fontsize=8, arrowprops={"arrowstyle": "->", "alpha": 0.5})
 axis.set_xlabel("Processos MPI")
 axis.set_ylabel("Fator")
 axis.set_title("Strong scaling: speedup e eficiencia")
@@ -120,6 +141,8 @@ hybrid = sorted((row for row in stats if row["family"] == "hybrid"), key=lambda 
 fig, axis = plt.subplots()
 axis.plot([row["omp_threads"] for row in hybrid], [row["speedup"] for row in hybrid], "o-", label="Speedup")
 axis.plot([row["omp_threads"] for row in hybrid], [row["efficiency"] for row in hybrid], "s-", label="Eficiencia")
+axis.plot([row["omp_threads"] for row in hybrid], [row["omp_threads"] for row in hybrid], "--", color="gray", label="Ideal")
+axis.annotate("ganho real: 1,447x\ncom 4 threads", (4, hybrid[-1]["speedup"]), xytext=(-105, 18), textcoords="offset points", fontsize=8, arrowprops={"arrowstyle": "->", "alpha": 0.5})
 axis.set_xlabel("Threads OpenMP")
 axis.set_ylabel("Fator")
 axis.set_title("Escala hibrida: speedup e eficiencia")
@@ -130,17 +153,20 @@ fig.tight_layout()
 fig.savefig(plots_dir / "hybrid_scaling_speedup_efficiency.png", dpi=160)
 plt.close(fig)
 
+fig, axis = plt.subplots()
 for matrix in sorted({row["matrix"] for row in base}):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
-    plt.plot([row["block_size"] for row in values], [row["padding_overhead"] * 100 for row in values], "o-", label=matrix)
-plt.xlabel("Block size")
-plt.ylabel("Padding (%)")
-plt.title("Overhead de padding do Block ELLPACK")
-plt.grid(alpha=0.25)
-plt.legend()
-plt.tight_layout()
-plt.savefig(plots_dir / "padding_by_block.png", dpi=160)
-plt.close()
+    axis.plot([row["block_size"] for row in values], [row["padding_overhead"] * 100 for row in values], "o-", label=matrix)
+    lowest = min(values, key=lambda row: row["padding_overhead"])
+    axis.annotate(f"min {lowest['padding_overhead'] * 100:.1f}%", (lowest["block_size"], lowest["padding_overhead"] * 100), xytext=(5, 8), textcoords="offset points", fontsize=8)
+axis.set_xlabel("Block size")
+axis.set_ylabel("Padding (%)")
+axis.set_title("Overhead de padding do Block ELLPACK\nBlocos maiores preenchem mais zeros")
+axis.grid(alpha=0.25)
+axis.legend()
+fig.tight_layout()
+fig.savefig(plots_dir / "padding_by_block.png", dpi=160)
+plt.close(fig)
 
 print(f"{len(rows)} registros, {len(stats)} grupos, metricas em {metrics_path}")
 print(f"graficos em {plots_dir}")
