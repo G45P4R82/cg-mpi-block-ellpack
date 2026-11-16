@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>Relatorio: Gradiente Conjugado Distribuido com Block ELLPACK</title>
+
+<style>
+  @page {
+    size: A4;
+    margin: 20mm 18mm;
+  }
+  body {
+    font-family: 'DejaVu Sans', 'Helvetica', 'Arial', sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #222;
+    max-width: 180mm;
+    margin: 0 auto;
+  }
+  h1, h2, h3, h4 {
+    color: #1a1a1a;
+    margin-top: 1.2em;
+  }
+  h1 { font-size: 22pt; border-bottom: 2px solid #333; padding-bottom: 6px; }
+  h2 { font-size: 16pt; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  h3 { font-size: 13pt; }
+  h4 { font-size: 11pt; }
+  code {
+    font-family: 'DejaVu Sans Mono', 'Consolas', monospace;
+    background: #f1f1f1;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 10pt;
+  }
+  pre {
+    background: #f6f8fa;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 9.5pt;
+    overflow-x: auto;
+    page-break-inside: avoid;
+  }
+  pre code { background: transparent; padding: 0; }
+  table {
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 10pt;
+    page-break-inside: avoid;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th { background: #f0f0f0; }
+  img {
+    max-width: 100%;
+    display: block;
+    margin: 12px auto;
+    page-break-inside: avoid;
+  }
+  blockquote {
+    border-left: 4px solid #ccc;
+    color: #555;
+    margin: 10px 0;
+    padding: 4px 12px;
+    background: #fafafa;
+  }
+  strong { color: #111; }
+  a { color: #0366d6; text-decoration: none; }
+</style>
+
+</head>
+<body>
+<h1 id="gradiente-conjugado-distribuido-com-block-ellpack">Gradiente Conjugado Distribuido com Block ELLPACK</h1>
+<h2 id="resumo">Resumo</h2>
+<p>Este trabalho implementa o metodo do Gradiente Conjugado distribuido para
+sistemas lineares esparsos, simetricos e definidos positivos. A matriz e
+armazenada em Block ELLPACK, as linhas sao distribuidas entre processos MPI e
+as operacoes locais usam OpenMP. Foram executadas 54 configuracoes da
+campanha principal e 12 configuracoes do experimento complementar de
+escalabilidade por nos, todas com 3 repeticoes validas, no cluster TVBox.</p>
+<p>Os resultados mostram que o solver atingiu o criterio de tolerancia em todas
+as execucoes. Para a matriz <code>bcsstk16</code>, o aumento de threads OpenMP reduziu o
+tempo medio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI em um
+unico nos nao apresentou ganho. Entretanto, ao distribuir os processos entre
+nos distintos, o speedup atinge 2,19x com <code>2 nos</code> e 2,05x com <code>4 nos</code> em
+relacao a referencia de 1 nos.</p>
+<h2 id="ambiente">Ambiente</h2>
+<p>Os experimentos foram executados no contexto <code>tvbox-k3s</code>, em um cluster k3s
+com 11 nos. Nove nos estavam <code>Ready</code> durante a campanha; dois permaneceram
+<code>NotReady</code>. Os nos selecionados para a imagem ARM64 possuem quatro CPUs e
+aproximadamente 1,8 GiB de memoria disponivel.</p>
+<table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Configuracao</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kubernetes</td>
+<td>v1.36.4+k3s1</td>
+</tr>
+<tr>
+<td>Arquitetura</td>
+<td>ARM64</td>
+</tr>
+<tr>
+<td>MPI</td>
+<td>MPICH via MPI Operator v0.8.2</td>
+</tr>
+<tr>
+<td>OpenMP</td>
+<td><code>-fopenmp</code>, <code>schedule(static)</code></td>
+</tr>
+<tr>
+<td>BLAS</td>
+<td>OpenBLAS disponivel na imagem</td>
+</tr>
+<tr>
+<td>Imagem</td>
+<td><code>srmarinho/cg-mpi:arm64</code></td>
+</tr>
+<tr>
+<td>Tolerancia</td>
+<td><code>1e-8</code></td>
+</tr>
+<tr>
+<td>Maximo de iteracoes</td>
+<td><code>10000</code></td>
+</tr>
+</tbody>
+</table>
+<p>O codigo foi compilado na imagem ARM64 com <code>mpicxx</code>, OpenMP e OpenBLAS. As
+operacoes vetoriais do CG sao implementadas diretamente em C++ com OpenMP.</p>
+<h2 id="datasets-e-problema-fisico">Datasets e problema fisico</h2>
+<p>Os dados usados neste trabalho sao matrizes de rigidez estrutural da UF Sparse
+Matrix Collection, atualmente conhecida como SuiteSparse Matrix Collection.
+Elas nao sao tabelas de observacoes ou imagens: sao modelos numericos
+resultantes de discretizacoes de estruturas de engenharia. Cada linha e cada
+coluna representa um grau de liberdade do modelo, e cada valor representa a
+interacao entre dois graus de liberdade.</p>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th>Problema original</th>
+<th style="text-align: right;">Dimensao</th>
+<th style="text-align: right;">Entradas no arquivo</th>
+<th style="text-align: right;"><code>nnz</code> expandido</th>
+<th style="text-align: right;">Densidade expandida</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bcsstk34</code></td>
+<td>Matriz de rigidez de um problema de flambagem NASTRAN da Boeing</td>
+<td style="text-align: right;">588 x 588</td>
+<td style="text-align: right;">11.003</td>
+<td style="text-align: right;">21.418</td>
+<td style="text-align: right;">6,195%</td>
+</tr>
+<tr>
+<td><code>bcsstk14</code></td>
+<td>Matriz de rigidez do teto do Omni Coliseum, Atlanta</td>
+<td style="text-align: right;">1.806 x 1.806</td>
+<td style="text-align: right;">32.630</td>
+<td style="text-align: right;">63.454</td>
+<td style="text-align: right;">1,945%</td>
+</tr>
+<tr>
+<td><code>bcsstk16</code></td>
+<td>Matriz de rigidez de uma barragem do Corps of Engineers</td>
+<td style="text-align: right;">4.884 x 4.884</td>
+<td style="text-align: right;">147.631</td>
+<td style="text-align: right;">290.378</td>
+<td style="text-align: right;">1,217%</td>
+</tr>
+</tbody>
+</table>
+<p>Os tres arquivos possuem cabecalho Matrix Market:</p>
+<div class="codehilite"><pre><span></span><code>matrix coordinate real symmetric
+</code></pre></div>
+
+<p>Isso significa que os valores sao reais, estao armazenados em coordenadas
+<code>(linha, coluna, valor)</code> e a matriz e simetrica. O arquivo armazena apenas a
+parte triangular. Durante a leitura, o programa expande cada entrada fora da
+diagonal:</p>
+<div class="codehilite"><pre><span></span><code>A[i][j] = valor
+A[j][i] = valor
+</code></pre></div>
+
+<p>A diagonal nao e duplicada. Por isso, a quantidade de entradas do arquivo
+original e menor que o <code>nnz</code> usado pelo solver depois da expansao. Essa
+expansao e necessaria para que o produto matriz-vetor represente a matriz
+completa usada pelo Gradiente Conjugado.</p>
+<p>O problema numerico resolvido e:</p>
+<div class="codehilite"><pre><span></span><code>A x = b
+</code></pre></div>
+
+<p>Para validar o solver, o projeto define uma solucao conhecida <code>x_true</code> como um
+vetor de uns e calcula:</p>
+<div class="codehilite"><pre><span></span><code>b = A x_true
+</code></pre></div>
+
+<p>O Gradiente Conjugado recebe <code>A</code> e <code>b</code> e tenta reconstruir <code>x_true</code>. Assim, os
+experimentos medem simultaneamente a corretude da solucao e o desempenho do
+processamento esparso. A baixa densidade das matrizes explica por que o
+produto matriz-vetor e limitado principalmente por acesso a memoria, e nao por
+operacoes aritmeticas.</p>
+<p>O <code>nnz</code> expandido indica quantas entradas reais existem na matriz completa. Ja
+o padding mostrado nos resultados e introduzido pelo formato Block ELLPACK:
+cada grupo de linhas reserva o mesmo numero de blocos, preenchendo posicoes
+ausentes com zeros. Portanto, o padding nao pertence ao dataset original; ele
+mede o custo adicional da representacao escolhida pelo projeto.</p>
+<p>As fontes originais sao:</p>
+<div class="codehilite"><pre><span></span><code>https://www.cise.ufl.edu/research/sparse/MM/Boeing/bcsstk34.tar.gz
+https://www.cise.ufl.edu/research/sparse/MM/HB/bcsstk14.tar.gz
+https://www.cise.ufl.edu/research/sparse/MM/HB/bcsstk16.tar.gz
+</code></pre></div>
+
+<h2 id="metodologia">Metodologia</h2>
+<h3 id="configuracoes-experimentais">Configuracoes experimentais</h3>
+<p>O estudo foi dividido em tres familias. Todas as configuracoes tiveram tres
+repeticoes, usando a mesma tolerancia <code>1e-8</code> e o mesmo limite de <code>10000</code>
+iteracoes.</p>
+<p><strong>Estudo do Block ELLPACK:</strong> para cada uma das tres matrizes, foram usados
+block sizes <code>4</code>, <code>8</code>, <code>16</code> e <code>32</code>, com dois processos MPI e uma thread OpenMP
+por processo. Isso produz:</p>
+<div class="codehilite"><pre><span></span><code>3 matrizes x 4 block sizes x 3 repeticoes = 36 execucoes
+</code></pre></div>
+
+<p><strong>Strong scaling MPI:</strong> foi usada <code>bcsstk16</code> com block size <code>8</code> e uma thread
+OpenMP por processo. O numero de processos MPI foi <code>1</code>, <code>2</code> e <code>4</code>, com tres
+repeticoes por ponto:</p>
+<div class="codehilite"><pre><span></span><code>3 configuracoes MPI x 3 repeticoes = 9 execucoes
+</code></pre></div>
+
+<p><strong>Escala hibrida MPI/OpenMP:</strong> foi usada <code>bcsstk16</code> com block size <code>8</code> e dois
+processos MPI. O numero de threads OpenMP foi <code>1</code>, <code>2</code> e <code>4</code>, novamente com
+tres repeticoes:</p>
+<div class="codehilite"><pre><span></span><code>3 configuracoes OpenMP x 3 repeticoes = 9 execucoes
+</code></pre></div>
+
+<p>No total, a campanha possui <code>36 + 9 + 9 = 54</code> execucoes.</p>
+<p>Em cada processo MPI, o vetor global necessario ao SpMV e formado por
+<code>MPI_Allgatherv</code>. Os produtos escalares do CG usam <code>MPI_Allreduce</code>. Dentro de
+cada processo, o SpMV, os produtos escalares e as atualizacoes dos vetores
+<code>x</code>, <code>r</code> e <code>p</code> usam OpenMP com <code>schedule(static)</code>.</p>
+<p>O speedup foi calculado por:</p>
+<div class="codehilite"><pre><span></span><code>speedup = tempo da configuracao de referencia / tempo da configuracao
+eficiencia = speedup / numero de recursos adicionais
+</code></pre></div>
+
+<p>Para MPI, a referencia foi a configuracao com um processo. Para OpenMP, a
+referencia foi a configuracao hibrida com uma thread.</p>
+<h2 id="validacao">Validacao</h2>
+<p>Para cada execucao, foi construída uma solucao conhecida com <code>x_true</code> igual a
+um vetor de uns. O vetor do lado direito foi calculado como <code>b = A*x_true</code>.
+Depois do CG, foram medidos o residuo relativo explicito e o erro da solucao.</p>
+<table>
+<thead>
+<tr>
+<th>Metrica</th>
+<th style="text-align: right;">Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Execucoes validas</td>
+<td style="text-align: right;">54/54</td>
+</tr>
+<tr>
+<td>Maior residuo relativo</td>
+<td style="text-align: right;"><code>9,92678e-09</code></td>
+</tr>
+<tr>
+<td>Maior erro da solucao</td>
+<td style="text-align: right;"><code>0,148652</code></td>
+</tr>
+<tr>
+<td>Repeticoes por grupo</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+<p>Todos os residuos ficaram abaixo da tolerancia <code>1e-8</code>.</p>
+<h2 id="resultados">Resultados</h2>
+<p>Os dados completos estao em:</p>
+<div class="codehilite"><pre><span></span><code>results/processed/cg_results_tvbox.csv
+results/processed/cg_stats_tvbox.csv
+results/processed/cg_metrics_tvbox.csv
+</code></pre></div>
+
+<p>Os tempos de solucao observados variaram entre <code>1,39937 s</code> e <code>22,993 s</code>,
+dependendo da matriz e da configuracao.</p>
+<h3 id="melhor-block-size-por-matriz">Melhor block size por matriz</h3>
+<table>
+<thead>
+<tr>
+<th>Matriz</th>
+<th style="text-align: right;">Block size</th>
+<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Padding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bcsstk34</code></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1,41393</td>
+<td style="text-align: right;">69,65%</td>
+</tr>
+<tr>
+<td><code>bcsstk16</code></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2,16233</td>
+<td style="text-align: right;">56,28%</td>
+</tr>
+<tr>
+<td><code>bcsstk14</code></td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">16,87960</td>
+<td style="text-align: right;">68,66%</td>
+</tr>
+</tbody>
+</table>
+<p>O menor padding de toda a campanha foi <code>56,28%</code> e o maior foi <code>90,12%</code>.
+Isso confirma que o tamanho do bloco tem impacto importante no desperdicio de
+memoria do Block ELLPACK.</p>
+<h3 id="strong-scaling">Strong scaling</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Processos MPI</th>
+<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Speedup</th>
+<th style="text-align: right;">Eficiencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2,12752</td>
+<td style="text-align: right;">1,000</td>
+<td style="text-align: right;">1,000</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2,17887</td>
+<td style="text-align: right;">0,976</td>
+<td style="text-align: right;">0,488</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2,31090</td>
+<td style="text-align: right;">0,921</td>
+<td style="text-align: right;">0,230</td>
+</tr>
+</tbody>
+</table>
+<p>Neste tamanho de problema, a comunicacao MPI e o custo de sincronizacao
+superam o ganho de paralelismo. O resultado nao representa uma falha de
+corretude; indica que a matriz e pequena para justificar mais processos.</p>
+<h3 id="escala-hibrida">Escala hibrida</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Threads OpenMP</th>
+<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Speedup</th>
+<th style="text-align: right;">Eficiencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2,17016</td>
+<td style="text-align: right;">1,000</td>
+<td style="text-align: right;">1,000</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1,67007</td>
+<td style="text-align: right;">1,299</td>
+<td style="text-align: right;">0,650</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1,50024</td>
+<td style="text-align: right;">1,447</td>
+<td style="text-align: right;">0,362</td>
+</tr>
+</tbody>
+</table>
+<p>A versao com quatro threads foi a mais rapida. A eficiencia caiu porque o
+problema e limitado por acesso a memoria, sincronizacao e tamanho reduzido da
+matriz.</p>
+<h3 id="escalabilidade-por-nos">Escalabilidade por nos</h3>
+<p>Foi realizado um experimento complementar de escalabilidade por numero de
+nos, usando <code>bcsstk16</code>, <code>block_size=8</code> e 3 repeticoes por configuracao. Os
+workers foram distribuidos atraves de <code>nodeAffinity</code> em um pool de nos ARM64
+(<code>tvbox02</code>, <code>tvbox03</code>, <code>cluster-tvbox-04</code>, <code>cluster-tvbox-05</code>), e o launcher
+foi fixado em <code>tvbox01</code>. Para <code>nodes == mpi</code> foi usado <code>podAntiAffinity</code> para
+garantir exatamente um worker por no.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Nos</th>
+<th style="text-align: right;">MPI</th>
+<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Speedup</th>
+<th style="text-align: right;">Eficiencia</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4,751</td>
+<td style="text-align: right;">1,000</td>
+<td style="text-align: right;">1,000</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2,166</td>
+<td style="text-align: right;">2,193</td>
+<td style="text-align: right;">1,097</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">7,915</td>
+<td style="text-align: right;">0,600</td>
+<td style="text-align: right;">0,300</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2,321</td>
+<td style="text-align: right;">2,047</td>
+<td style="text-align: right;">0,512</td>
+</tr>
+</tbody>
+</table>
+<p>A configuracao de referencia foi <code>1 no + 2 processos MPI</code>. O speedup
+superlinear observado em <code>2 nos</code> (2,19x) indica que o kernel SpMV e
+fortemente memory-bound: ao distribuir o trabalho entre nos distintos, cada
+processo usa o cache e a largura de banda local de um nos proprio, em vez
+de competir com outro processo pelo mesmo canal de memoria.</p>
+<p>A configuracao <code>2 nos + 4 processos</code> apresentou o pior desempenho porque
+dobrou o numero de workers por no. Dois processos MPI por nos TVBox competem
+pelos quatro cores fisicos e pela memoria compartilhada, elevando o tempo
+para 7,9s. Esse resultado confirma que a localizacao dos processos importa
+tanto quanto a quantidade total.</p>
+<p>Em <code>4 nos</code>, o speedup voltou a 2,05x. A eficiencia cai para <code>0,512</code> porque
+cada iteracao do CG exige <code>MPI_Allgatherv</code> e <code>MPI_Allreduce</code>, e o custo
+dessas sincronizacoes entre quatro nos via rede cresce proporcionalmente.
+Ainda assim, foi a configuracao mais rapida com <code>4</code> processos.</p>
+<p><img alt="Tempo por nos" src="../results/plots/tvbox-nodes/time_by_nodes.png"></p>
+<p><strong>Historia do grafico:</strong> o eixo horizontal mostra o numero de nos distintos
+onde os workers MPI foram agendados. A linha laranja (<code>MPI=2</code>) parte de
+<code>4,75s</code> com um no e cai para <code>2,17s</code> com dois nos, reduzindo o tempo em mais
+da metade. A linha azul (<code>MPI=4</code>) partiria de co-location em dois nos com
+<code>7,92s</code> e desce para <code>2,32s</code> em quatro nos distintos. O grafico demonstra
+que espalhar processos por mais nos vence todas as versoes com concentracao
+no mesmo nos.</p>
+<p><img alt="Speedup e eficiencia por nos" src="../results/plots/tvbox-nodes/speedup_efficiency_by_nodes.png"></p>
+<p><strong>Historia do grafico:</strong> a linha ideal mostraria speedup proporcional ao
+numero de nos. O speedup medido com <code>MPI=4</code> fica abaixo do ideal em todas as
+configuracoes: a 2 nos ele e inferior a 1 (aumentar workers sem espalhar
+piora), e a 4 nos chega a 2,05x. A eficiencia revela o custo real da
+comunicacao MPI entre maquinas: cai para <code>0,30</code> quando ha co-location e sobe
+apenas para <code>0,51</code> com nos distintos.</p>
+<p>Logs e manifestos deste experimento:</p>
+<div class="codehilite"><pre><span></span><code>results/node-scaling-20261116T032812Z/
+</code></pre></div>
+
+<p>CSV agregado:</p>
+<div class="codehilite"><pre><span></span><code>results/processed/cg_node_scaling_tvbox.csv
+</code></pre></div>
+
+<h3 id="graficos">Graficos</h3>
+<h4 id="como-ler-os-graficos">Como ler os graficos</h4>
+<p>Todos os pontos representam a media de tres execucoes. As barras de erro
+representam o desvio padrao entre as repeticoes. Cada caixa combina os valores
+do ponto com uma frase curta sobre o fenomeno observado.</p>
+<p>Nos graficos de tempo, o valor dentro da caixa e o tempo medio em segundos.
+Nos graficos de escala, <code>S</code> significa speedup e <code>E</code> significa eficiencia. A
+linha pontilhada mostra o comportamento ideal: dobrar os recursos deveria
+dobrar o speedup. No grafico de padding, <code>pad</code> e a porcentagem de zeros
+adicionados pelo Block ELLPACK, nao zeros existentes no dataset original.</p>
+<p><img alt="Tempo por block size" src="../results/plots/tvbox/solve_time_by_block.png"></p>
+<p><strong>Historia do grafico:</strong> cada linha parte do bloco 4 e avanca para os blocos 8,
+16 e 32. O ponto de cada matriz representa a media de tres execucoes; as barras
+mostram a variacao entre essas repeticoes. O bloco 4 aparece como a melhor
+escolha nas tres matrizes porque mantem a estrutura mais proxima do padrao real
+de nao zeros. Quando o bloco aumenta, o ELLPACK precisa reservar mais espaco
+uniforme para linhas que possuem padroes diferentes. Isso aumenta o padding,
+as leituras de zeros e o trabalho do SpMV. A matriz <code>bcsstk14</code> evidencia mais
+o custo porque e maior e permanece muito esparsa.</p>
+<p><img alt="Strong scaling" src="../results/plots/tvbox/strong_scaling_time.png"></p>
+<p><strong>Historia do grafico:</strong> aumentar de 1 para 2 e 4 processos MPI nao reduziu o
+tempo neste problema. Cada iteracao precisa reunir <code>p</code> com <code>MPI_Allgatherv</code> e
+sincronizar produtos escalares com <code>MPI_Allreduce</code>. Para <code>bcsstk16</code>, esse custo
+de comunicacao foi maior que o ganho do processamento paralelo.</p>
+<p><img alt="Speedup e eficiencia MPI" src="../results/plots/tvbox/strong_scaling_speedup_efficiency.png"></p>
+<p><strong>Historia do grafico:</strong> a linha ideal subiria proporcionalmente ao numero de
+processos. A curva medida fica abaixo de 1 a partir de dois processos, e a
+eficiencia cai para <code>0,230</code> com quatro processos. Isso mostra que adicionar
+processos nao e automaticamente uma aceleracao: o tamanho da matriz e a
+frequencia das sincronizacoes dominam o tempo.</p>
+<p><img alt="Speedup e eficiencia OpenMP" src="../results/plots/tvbox/hybrid_scaling_speedup_efficiency.png"></p>
+<p><strong>Historia do grafico:</strong> dentro de cada processo, OpenMP foi mais efetivo que
+a escala MPI neste caso. Duas threads produziram speedup de <code>1,299x</code> e quatro
+threads chegaram a <code>1,447x</code>. A eficiencia, porem, caiu para <code>0,362</code>, porque as
+threads compartilham largura de banda e o problema nao possui trabalho
+suficiente para escalar idealmente.</p>
+<p><img alt="Padding Block ELLPACK" src="../results/plots/tvbox/padding_by_block.png"></p>
+<p><strong>Historia do grafico:</strong> as tres curvas mostram a quantidade de espaco que nao
+corresponde a entradas reais da matriz. No inicio, com bloco 4, o padding e
+menor porque cada grupo de linhas precisa acomodar menos combinacoes de
+colunas. Durante a progressao para blocos 8 e 16, o formato ganha regularidade
+de acesso, mas passa a preencher mais posicoes vazias. No fim, com bloco 32,
+o custo fica maior: em <code>bcsstk16</code> o padding chega a <code>83,15%</code>, enquanto o maior
+valor observado na campanha chega a <code>90,12%</code>. Esses zeros nao fazem parte do
+problema estrutural; sao memoria e leituras adicionais introduzidas pelo
+Block ELLPACK. O grafico, portanto, explica por que o menor block size foi o
+melhor compromisso nos tempos medidos.</p>
+<h3 id="custos-observados">Custos observados</h3>
+<p>O <code>MPI_Allgatherv</code> e executado a cada iteracao para disponibilizar o vetor
+global <code>p</code>. Tambem existem dois <code>MPI_Allreduce</code> por iteracao para produtos
+escalares. Esses pontos de sincronizacao explicam parte da ausencia de ganho
+no strong scaling.</p>
+<p>O padding do Block ELLPACK e outro gargalo: cada bloco armazena uma quantidade
+fixa de valores, incluindo zeros de preenchimento. Para matrizes maiores ou
+mais irregulares, uma comparacao com CSR ou SELL-C-sigma e uma otimizacao
+futura relevante.</p>
+<h2 id="analise">Analise</h2>
+<p>O solver foi melhorado para paralelizar com OpenMP os produtos escalares, as
+atualizacoes de <code>x</code>, <code>r</code> e <code>p</code>, e o calculo dos erros de validacao. O <code>SpMV</code>
+usa <code>schedule(static)</code> e o mesmo numero de threads informado por
+<code>--threads</code>.</p>
+<p>O comportamento observado e coerente com um kernel SpMV memory-bound. A
+redundancia de leituras causada pelo padding e a comunicacao global por
+iteracao limitam o aproveitamento de mais processos MPI. A escala OpenMP
+apresentou ganho mais consistente neste ambiente, embora a eficiencia tambem
+caia com quatro threads.</p>
+<h2 id="conclusao">Conclusao</h2>
+<p>O projeto entrega uma implementacao distribuida funcional de Gradiente
+Conjugado com MPI, OpenMP e Block ELLPACK. As 54 execucoes foram concluidas
+com residuo abaixo de <code>1e-8</code>, e os resultados foram preservados em CSV,
+estatisticas, logs e graficos.</p>
+<p>Os experimentos mostram que a escolha do block size e mais importante que
+simplesmente aumentar o numero de processos MPI para as matrizes avaliadas.
+Como trabalho futuro, recomenda-se reduzir o padding, substituir o
+<code>MPI_Allgatherv</code> por comunicacao seletiva quando possivel, medir os custos de
+cada fase separadamente e comparar com CSR.</p>
+</body>
+</html>
