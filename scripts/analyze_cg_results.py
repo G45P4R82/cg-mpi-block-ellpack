@@ -98,12 +98,17 @@ for matrix in sorted({row["matrix"] for row in base}):
         label=matrix,
     )
     for index, row in enumerate(values):
-        stage = "INICIO" if index == 0 else "FIM" if index == len(values) - 1 else "DURANTE"
+        descriptions = [
+            "bloco pequeno reduz zeros e tempo",
+            "bloco intermediario equilibra acesso e armazenamento",
+            "padding crescente aumenta trabalho e memoria",
+            "bloco grande amplia zeros e custo",
+        ]
         annotate_point(
             axis,
             row["block_size"],
             row["solve_mean_s"],
-            f"{stage}\nb={row['block_size']} | {row['solve_mean_s']:.3f}s\npad={row['padding_overhead'] * 100:.1f}%",
+            f"b={row['block_size']} | {row['solve_mean_s']:.3f}s\npad={row['padding_overhead'] * 100:.1f}%\n{descriptions[index]}",
             (4, 8 if index % 2 == 0 else -38),
         )
 axis.set_xlabel("Block size")
@@ -126,12 +131,16 @@ axis.errorbar(
     capsize=4,
 )
 for index, row in enumerate(strong):
-    stage = "INICIO" if index == 0 else "FIM" if index == len(strong) - 1 else "DURANTE"
+    descriptions = [
+        "referencia sem comunicacao MPI extra",
+        "mais comunicacao produz pouco ganho",
+        "overhead MPI domina e tempo aumenta",
+    ]
     annotate_point(
         axis,
         row["mpi_processes"],
         row["solve_mean_s"],
-        f"{stage}\nMPI={row['mpi_processes']}\n{row['solve_mean_s']:.3f}s",
+        f"MPI={row['mpi_processes']} | {row['solve_mean_s']:.3f}s\n{descriptions[index]}",
         (-48, 10 if index % 2 == 0 else -35),
     )
 axis.set_xlabel("Processos MPI")
@@ -148,11 +157,16 @@ axis.plot([row["mpi_processes"] for row in strong], [row["speedup"] for row in s
 axis.plot([row["mpi_processes"] for row in strong], [row["efficiency"] for row in strong], "s-", label="Eficiencia")
 axis.plot([row["mpi_processes"] for row in strong], [row["mpi_processes"] for row in strong], "--", color="gray", label="Ideal")
 for index, row in enumerate(strong):
+    descriptions = [
+        "referencia: speedup e eficiencia ideais",
+        "comunicacao reduz o ganho esperado",
+        "mais processos diminuem eficiencia final",
+    ]
     annotate_point(
         axis,
         row["mpi_processes"],
         row["speedup"],
-        f"MPI={row['mpi_processes']}\nS={row['speedup']:.3f}x\nE={row['efficiency']:.3f}",
+        f"MPI={row['mpi_processes']} | S={row['speedup']:.3f}x\nE={row['efficiency']:.3f}\n{descriptions[index]}",
         (-42, 10 if index % 2 == 0 else -38),
     )
 axis.set_xlabel("Processos MPI")
@@ -172,11 +186,16 @@ axis.plot([row["omp_threads"] for row in hybrid], [row["speedup"] for row in hyb
 axis.plot([row["omp_threads"] for row in hybrid], [row["efficiency"] for row in hybrid], "s-", label="Eficiencia")
 axis.plot([row["omp_threads"] for row in hybrid], [row["omp_threads"] for row in hybrid], "--", color="gray", label="Ideal")
 for index, row in enumerate(hybrid):
+    descriptions = [
+        "referencia: uma thread processa tudo",
+        "duas threads reduzem tempo efetivo",
+        "quatro threads melhoram, eficiencia cai",
+    ]
     annotate_point(
         axis,
         row["omp_threads"],
         row["speedup"],
-        f"{'INICIO' if index == 0 else 'FIM' if index == len(hybrid) - 1 else 'DURANTE'}\nT={row['omp_threads']}\nS={row['speedup']:.3f}x\nE={row['efficiency']:.3f}",
+        f"T={row['omp_threads']} | S={row['speedup']:.3f}x\nE={row['efficiency']:.3f}\n{descriptions[index]}",
         (-42, 10 if index % 2 == 0 else -42),
     )
 axis.set_xlabel("Threads OpenMP")
@@ -195,12 +214,17 @@ for matrix in sorted({row["matrix"] for row in base}):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
     axis.plot([row["block_size"] for row in values], [row["padding_overhead"] * 100 for row in values], "o-", label=matrix)
     for index, row in enumerate(values):
-        stage = "INICIO" if index == 0 else "FIM" if index == len(values) - 1 else "DURANTE"
+        descriptions = [
+            "bloco pequeno: menos zeros adicionados",
+            "bloco intermediario: padding comeca crescer",
+            "bloco maior: mais zeros armazenados",
+            "bloco grande: alto desperdicio de memoria",
+        ]
         annotate_point(
             axis,
             row["block_size"],
             row["padding_overhead"] * 100,
-            f"{stage}\nb={row['block_size']}\npad={row['padding_overhead'] * 100:.1f}%",
+            f"b={row['block_size']} | pad={row['padding_overhead'] * 100:.1f}%\n{descriptions[index]}",
             (4, 8 if index % 2 == 0 else -32),
         )
 axis.set_xlabel("Block size")

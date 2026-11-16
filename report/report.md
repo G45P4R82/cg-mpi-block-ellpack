@@ -222,14 +222,8 @@ matriz.
 #### Como ler os graficos
 
 Todos os pontos representam a media de tres execucoes. As barras de erro
-representam o desvio padrao entre as repeticoes. As caixas indicam a etapa da
-historia do experimento:
-
-```text
-INICIO   configuracao de referencia
-DURANTE  configuracao intermediaria
-FIM      maior block size, numero de processos ou numero de threads
-```
+representam o desvio padrao entre as repeticoes. Cada caixa combina os valores
+do ponto com uma frase curta sobre o fenomeno observado.
 
 Nos graficos de tempo, o valor dentro da caixa e o tempo medio em segundos.
 Nos graficos de escala, `S` significa speedup e `E` significa eficiencia. A
