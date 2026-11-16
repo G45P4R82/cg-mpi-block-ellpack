@@ -73,41 +73,41 @@
 
 </head>
 <body>
-<h1 id="gradiente-conjugado-distribuido-com-block-ellpack">Gradiente Conjugado Distribuido com Block ELLPACK</h1>
+<h1 id="gradiente-conjugado-distribuido-com-block-ellpack">Gradiente Conjugado Distribuído com Block ELLPACK</h1>
 <h2 id="resumo">Resumo</h2>
-<p>Este trabalho implementa o metodo do Gradiente Conjugado distribuido para
-sistemas lineares esparsos, simetricos e definidos positivos. A matriz e
-armazenada em Block ELLPACK, as linhas sao distribuidas entre processos MPI e
-as operacoes locais usam OpenMP. Foram entregues duas variantes do solver:</p>
+<p>Este trabalho implementa o método do Gradiente Conjugado distribuído para
+sistemas lineares esparsos, simétricos e definidos positivos. A matriz é
+armazenada em Block ELLPACK, as linhas são distribuídas entre processos MPI e
+as operações locais usam OpenMP. Foram entregues duas variantes do solver:</p>
 <ul>
 <li><code>cg_mpi</code> <strong>(replicated):</strong> cada processo armazena a matriz inteira e usa
-  <code>MPI_Allgatherv</code> para reunir o vetor global a cada iteracao.</li>
+  <code>MPI_Allgatherv</code> para reunir o vetor global a cada iteração.</li>
 <li><code>cg_mpi_distributed</code> <strong>(distributed):</strong> cada processo armazena apenas as
-  linhas locais do Block ELLPACK e troca somente as colunas necessarias via
+  linhas locais do Block ELLPACK e troca somente as colunas necessárias via
   <code>MPI_Alltoallv</code> seletivo.</li>
 </ul>
-<p>Foram executadas 54 configuracoes da campanha principal, 12 configuracoes do
-experimento de escalabilidade por nos (replicated) e 12 configuracoes
-comparativas da variante distributed, todas com 3 repeticoes validas, no
+<p>Foram executadas 54 configurações da campanha principal, 12 configurações do
+experimento de escalabilidade por nós (replicated) e 12 configurações
+comparativas da variante distributed, todas com 3 repetições válidas, no
 cluster TVBox.</p>
-<p>Os resultados mostram que o solver atingiu o criterio de tolerancia em todas
-as execucoes. Para a matriz <code>bcsstk16</code>, o aumento de threads OpenMP reduziu o
-tempo medio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI em um
-unico nos nao apresentou ganho. Entretanto, ao distribuir os processos entre
-nos distintos, o speedup atinge 2,19x com <code>2 nos</code> e 2,05x com <code>4 nos</code> para a
-variante replicada. A variante distribuida melhora esses numeros para
-<strong>3,12x com 2 nos</strong> e <strong>3,65x com 4 nos</strong>, reduzindo tambem a memoria por rank
+<p>Os resultados mostram que o solver atingiu o critério de tolerância em todas
+as execuções. Para a matriz <code>bcsstk16</code>, o aumento de threads OpenMP reduziu o
+tempo médio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI em um
+único nó não apresentou ganho. Entretanto, ao distribuir os processos entre
+nós distintos, o speedup atinge 2,19x com <code>2 nós</code> e 2,05x com <code>4 nós</code> para a
+variante replicada. A variante distribuída melhora esses números para
+<strong>3,12x com 2 nós</strong> e <strong>3,65x com 4 nós</strong>, reduzindo também a memória por rank
 de ~7,25 MB para 1,82 MB.</p>
 <h2 id="ambiente">Ambiente</h2>
 <p>Os experimentos foram executados no contexto <code>tvbox-k3s</code>, em um cluster k3s
-com 11 nos. Nove nos estavam <code>Ready</code> durante a campanha; dois permaneceram
-<code>NotReady</code>. Os nos selecionados para a imagem ARM64 possuem quatro CPUs e
-aproximadamente 1,8 GiB de memoria disponivel.</p>
+com 11 nós. Nove nós estavam <code>Ready</code> durante a campanha; dois permaneceram
+<code>NotReady</code>. Os nós selecionados para a imagem ARM64 possuem quatro CPUs e
+aproximadamente 1,8 GiB de memória disponível.</p>
 <table>
 <thead>
 <tr>
 <th>Item</th>
-<th>Configuracao</th>
+<th>Configuração</th>
 </tr>
 </thead>
 <tbody>
@@ -129,37 +129,37 @@ aproximadamente 1,8 GiB de memoria disponivel.</p>
 </tr>
 <tr>
 <td>BLAS</td>
-<td>OpenBLAS disponivel na imagem</td>
+<td>OpenBLAS disponível na imagem</td>
 </tr>
 <tr>
 <td>Imagem</td>
 <td><code>srmarinho/cg-mpi:arm64</code></td>
 </tr>
 <tr>
-<td>Tolerancia</td>
+<td>Tolerância</td>
 <td><code>1e-8</code></td>
 </tr>
 <tr>
-<td>Maximo de iteracoes</td>
+<td>Máximo de iterações</td>
 <td><code>10000</code></td>
 </tr>
 </tbody>
 </table>
-<p>O codigo foi compilado na imagem ARM64 com <code>mpicxx</code>, OpenMP e OpenBLAS. As
-operacoes vetoriais do CG sao implementadas diretamente em C++ com OpenMP.</p>
-<h2 id="datasets-e-problema-fisico">Datasets e problema fisico</h2>
-<p>Os dados usados neste trabalho sao matrizes de rigidez estrutural da UF Sparse
+<p>O código foi compilado na imagem ARM64 com <code>mpicxx</code>, OpenMP e OpenBLAS. As
+operações vetoriais do CG são implementadas diretamente em C++ com OpenMP.</p>
+<h2 id="datasets-e-problema-fisico">Datasets e problema físico</h2>
+<p>Os dados usados neste trabalho são matrizes de rigidez estrutural da UF Sparse
 Matrix Collection, atualmente conhecida como SuiteSparse Matrix Collection.
-Elas nao sao tabelas de observacoes ou imagens: sao modelos numericos
-resultantes de discretizacoes de estruturas de engenharia. Cada linha e cada
+Elas não são tabelas de observações ou imagens: são modelos numéricos
+resultantes de discretizações de estruturas de engenharia. Cada linha e cada
 coluna representa um grau de liberdade do modelo, e cada valor representa a
-interacao entre dois graus de liberdade.</p>
+interação entre dois graus de liberdade.</p>
 <table>
 <thead>
 <tr>
 <th>Dataset</th>
 <th>Problema original</th>
-<th style="text-align: right;">Dimensao</th>
+<th style="text-align: right;">Dimensão</th>
 <th style="text-align: right;">Entradas no arquivo</th>
 <th style="text-align: right;"><code>nnz</code> expandido</th>
 <th style="text-align: right;">Densidade expandida</th>
@@ -192,153 +192,230 @@ interacao entre dois graus de liberdade.</p>
 </tr>
 </tbody>
 </table>
-<p>Os tres arquivos possuem cabecalho Matrix Market:</p>
+<p>Os três arquivos possuem cabeçalho Matrix Market:</p>
 <div class="codehilite"><pre><span></span><code>matrix coordinate real symmetric
 </code></pre></div>
 
-<p>Isso significa que os valores sao reais, estao armazenados em coordenadas
-<code>(linha, coluna, valor)</code> e a matriz e simetrica. O arquivo armazena apenas a
+<p>Isso significa que os valores são reais, estão armazenados em coordenadas
+<code>(linha, coluna, valor)</code> e a matriz é simétrica. O arquivo armazena apenas a
 parte triangular. Durante a leitura, o programa expande cada entrada fora da
 diagonal:</p>
 <div class="codehilite"><pre><span></span><code>A[i][j] = valor
 A[j][i] = valor
 </code></pre></div>
 
-<p>A diagonal nao e duplicada. Por isso, a quantidade de entradas do arquivo
-original e menor que o <code>nnz</code> usado pelo solver depois da expansao. Essa
-expansao e necessaria para que o produto matriz-vetor represente a matriz
+<p>A diagonal não é duplicada. Por isso, a quantidade de entradas do arquivo
+original é menor que o <code>nnz</code> usado pelo solver depois da expansão. Essa
+expansão é necessária para que o produto matriz-vetor represente a matriz
 completa usada pelo Gradiente Conjugado.</p>
-<p>O problema numerico resolvido e:</p>
+<p>O problema numérico resolvido é:</p>
 <div class="codehilite"><pre><span></span><code>A x = b
 </code></pre></div>
 
-<p>Para validar o solver, o projeto define uma solucao conhecida <code>x_true</code> como um
+<p>Para validar o solver, o projeto define uma solução conhecida <code>x_true</code> como um
 vetor de uns e calcula:</p>
 <div class="codehilite"><pre><span></span><code>b = A x_true
 </code></pre></div>
 
 <p>O Gradiente Conjugado recebe <code>A</code> e <code>b</code> e tenta reconstruir <code>x_true</code>. Assim, os
-experimentos medem simultaneamente a corretude da solucao e o desempenho do
+experimentos medem simultaneamente a corretude da solução e o desempenho do
 processamento esparso. A baixa densidade das matrizes explica por que o
-produto matriz-vetor e limitado principalmente por acesso a memoria, e nao por
-operacoes aritmeticas.</p>
-<p>O <code>nnz</code> expandido indica quantas entradas reais existem na matriz completa. Ja
-o padding mostrado nos resultados e introduzido pelo formato Block ELLPACK:
-cada grupo de linhas reserva o mesmo numero de blocos, preenchendo posicoes
-ausentes com zeros. Portanto, o padding nao pertence ao dataset original; ele
-mede o custo adicional da representacao escolhida pelo projeto.</p>
-<p>As fontes originais sao:</p>
+produto matriz-vetor é limitado principalmente por acesso a memória, e não por
+operações aritméticas.</p>
+<p>O <code>nnz</code> expandido indica quantas entradas reais existem na matriz completa. Já
+o padding mostrado nos resultados é introduzido pelo formato Block ELLPACK:
+cada grupo de linhas reserva o mesmo número de blocos, preenchendo posições
+ausentes com zeros. Portanto, o padding não pertence ao dataset original; ele
+mede o custo adicional da representação escolhida pelo projeto.</p>
+<p>As fontes originais são:</p>
 <div class="codehilite"><pre><span></span><code>https://www.cise.ufl.edu/research/sparse/MM/Boeing/bcsstk34.tar.gz
 https://www.cise.ufl.edu/research/sparse/MM/HB/bcsstk14.tar.gz
 https://www.cise.ufl.edu/research/sparse/MM/HB/bcsstk16.tar.gz
 </code></pre></div>
 
 <h2 id="metodologia">Metodologia</h2>
-<h3 id="configuracoes-experimentais">Configuracoes experimentais</h3>
-<p>O estudo foi dividido em tres familias. Todas as configuracoes tiveram tres
-repeticoes, usando a mesma tolerancia <code>1e-8</code> e o mesmo limite de <code>10000</code>
-iteracoes.</p>
-<p><strong>Estudo do Block ELLPACK:</strong> para cada uma das tres matrizes, foram usados
+<h3 id="configuracoes-experimentais">Configurações experimentais</h3>
+<p>O estudo foi dividido em três famílias. Todas as configurações tiveram três
+repetições, usando a mesma tolerância <code>1e-8</code> e o mesmo limite de <code>10000</code>
+iterações.</p>
+<p><strong>Estudo do Block ELLPACK:</strong> para cada uma das três matrizes, foram usados
 block sizes <code>4</code>, <code>8</code>, <code>16</code> e <code>32</code>, com dois processos MPI e uma thread OpenMP
 por processo. Isso produz:</p>
-<div class="codehilite"><pre><span></span><code>3 matrizes x 4 block sizes x 3 repeticoes = 36 execucoes
+<div class="codehilite"><pre><span></span><code>3 matrizes x 4 block sizes x 3 repetições = 36 execuções
 </code></pre></div>
 
 <p><strong>Strong scaling MPI:</strong> foi usada <code>bcsstk16</code> com block size <code>8</code> e uma thread
-OpenMP por processo. O numero de processos MPI foi <code>1</code>, <code>2</code> e <code>4</code>, com tres
-repeticoes por ponto:</p>
-<div class="codehilite"><pre><span></span><code>3 configuracoes MPI x 3 repeticoes = 9 execucoes
+OpenMP por processo. O número de processos MPI foi <code>1</code>, <code>2</code> e <code>4</code>, com três
+repetições por ponto:</p>
+<div class="codehilite"><pre><span></span><code>3 configurações MPI x 3 repetições = 9 execuções
 </code></pre></div>
 
-<p><strong>Escala hibrida MPI/OpenMP:</strong> foi usada <code>bcsstk16</code> com block size <code>8</code> e dois
-processos MPI. O numero de threads OpenMP foi <code>1</code>, <code>2</code> e <code>4</code>, novamente com
-tres repeticoes:</p>
-<div class="codehilite"><pre><span></span><code>3 configuracoes OpenMP x 3 repeticoes = 9 execucoes
+<p><strong>Escala híbrida MPI/OpenMP:</strong> foi usada <code>bcsstk16</code> com block size <code>8</code> e dois
+processos MPI. O número de threads OpenMP foi <code>1</code>, <code>2</code> e <code>4</code>, novamente com
+três repetições:</p>
+<div class="codehilite"><pre><span></span><code>3 configurações OpenMP x 3 repetições = 9 execuções
 </code></pre></div>
 
-<p>No total, a campanha possui <code>36 + 9 + 9 = 54</code> execucoes.</p>
-<p>Em cada processo MPI, o vetor global necessario ao SpMV e formado por
+<p>No total, a campanha possui <code>36 + 9 + 9 = 54</code> execuções.</p>
+<p>Em cada processo MPI, o vetor global necessário ao SpMV é formado por
 <code>MPI_Allgatherv</code>. Os produtos escalares do CG usam <code>MPI_Allreduce</code>. Dentro de
-cada processo, o SpMV, os produtos escalares e as atualizacoes dos vetores
+cada processo, o SpMV, os produtos escalares e as atualizações dos vetores
 <code>x</code>, <code>r</code> e <code>p</code> usam OpenMP com <code>schedule(static)</code>.</p>
 <p>O speedup foi calculado por:</p>
-<div class="codehilite"><pre><span></span><code>speedup = tempo da configuracao de referencia / tempo da configuracao
-eficiencia = speedup / numero de recursos adicionais
+<div class="codehilite"><pre><span></span><code>speedup = tempo da configuração de referência / tempo da configuração
+eficiência = speedup / número de recursos adicionais
 </code></pre></div>
 
-<p>Para MPI, a referencia foi a configuracao com um processo. Para OpenMP, a
-referencia foi a configuracao hibrida com uma thread.</p>
-<h3 id="justificativa-das-decisoes-de-projeto">Justificativa das decisoes de projeto</h3>
-<p>A distribuicao inicial por intervalos contiguos de linhas foi escolhida por
-ser simples, deterministica e por preservar a localidade dos blocos do
-ELLPACK. Ela tambem permite calcular <code>counts</code> e <code>displacements</code> diretamente a
-partir da dimensao global, sem uma etapa adicional de particionamento.</p>
+<p>Para MPI, a referência foi a configuração com um processo. Para OpenMP, a
+referência foi a configuração híbrida com uma thread.</p>
+<h3 id="justificativa-das-decisoes-de-projeto">Justificativa das decisões de projeto</h3>
+<p>A distribuição inicial por intervalos contíguos de linhas foi escolhida por
+ser simples, determinística e por preservar a localidade dos blocos do
+ELLPACK. Ela também permite calcular <code>counts</code> e <code>displacements</code> diretamente a
+partir da dimensão global, sem uma etapa adicional de particionamento.</p>
 <p>O Block ELLPACK foi escolhido porque agrupa entradas em blocos densos e deixa
 o laço interno do SpMV regular. Essa regularidade favorece <code>schedule(static)</code>
-linhas possuem padroes de esparsidade diferentes, motivo pelo qual os tamanhos
-4, 8, 16 e 32 foram comparados.</p>
-<p>O modelo MPI+OpenMP foi escolhido para separar os dois niveis de paralelismo:
+porque as linhas possuem padrões de esparsidade diferentes, motivo pelo qual os
+tamanhos 4, 8, 16 e 32 foram comparados.</p>
+<p>O modelo MPI+OpenMP foi escolhido para separar os dois níveis de paralelismo:
 MPI distribui os intervalos de linhas entre processos e OpenMP explora os
-cores dentro de cada processo. As reducoes globais usam <code>MPI_Allreduce</code>,
-Depois, a variante distributed substitui a comunicacao completa por pedidos
-seletivos com <code>MPI_Alltoallv</code>, evitando enviar colunas que nao aparecem nos
+cores dentro de cada processo. As reduções globais usam <code>MPI_Allreduce</code>,
+Depois, a variante distributed substitui a comunicação completa por pedidos
+seletivos com <code>MPI_Alltoallv</code>, evitando enviar colunas que não aparecem nos
 blocos locais.</p>
-<p>As linhas sao contiguas, e nao ciclicas, porque isso reduz a complexidade do
-mapa de proprietario de cada linha e torna a validacao do resultado local mais
-direta. O custo potencial dessa escolha e desbalanceamento se a quantidade de
-nao zeros variar muito entre intervalos; por isso os logs registram iteracoes,
-padding e tempos por configuracao.</p>
-<h2 id="validacao">Validacao</h2>
-<p>Para cada execucao, foi construída uma solucao conhecida com <code>x_true</code> igual a
+<p>As linhas são contiguas, e não cíclicas, porque isso reduz a complexidade do
+mapa de proprietário de cada linha e torna a validação do resultado local mais
+direta. O custo potencial dessa escolha é desbalanceamento se a quantidade de
+não zeros variar muito entre intervalos; por isso os logs registram iterações,
+padding e tempos por configuração.</p>
+<h3 id="evidencias-de-otimizacao-no-codigo">Evidências de otimização no código</h3>
+<p>As otimizações não são apenas uma descrição conceitual: elas aparecem
+explicitamente na implementação. Os trechos abaixo foram extraídos do código
+entregue e mostram onde cada decisão é aplicada.</p>
+<p><strong>Paralelismo OpenMP no produto escalar.</strong> O produto interno usa redução
+paralela, distribuição estática das iterações e o número de threads recebido
+por linha de comando:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/cg_mpi_distributed.cpp:46-52</span>
+<span class="cp">#pragma omp parallel for schedule(static) num_threads(threads) reduction(+:result)</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">a</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">a</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</code></pre></div>
+
+<p>O mesmo padrão é usado no SpMV e nas atualizações de <code>x</code>, <code>r</code> e <code>p</code>:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/block_ellpack_local.cpp:85-90</span>
+<span class="n">y</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">row_count_</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+<span class="cp">#pragma omp parallel for schedule(static) num_threads(threads)</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">block_row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">block_row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">block_rows_</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">block_row</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+</code></pre></div>
+
+<p><strong>Redução do armazenamento do Block ELLPACK.</strong> A variante distribuída cria
+somente os blocos correspondentes ao intervalo de linhas do rank. Os vetores
+de entrada são liberados depois da conversão:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/cg_mpi_distributed.cpp:95-103</span>
+<span class="n">SparseMatrix</span><span class="w"> </span><span class="n">local_sparse</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">read_matrix_market_local</span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="n">matrix</span><span class="p">,</span><span class="w"> </span><span class="n">first</span><span class="p">,</span><span class="w"> </span><span class="n">local_rows</span><span class="p">);</span>
+<span class="n">BlockELLLocal</span><span class="w"> </span><span class="nf">matrix</span><span class="p">(</span><span class="n">local_sparse</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">.</span><span class="n">block_size</span><span class="p">,</span><span class="w"> </span><span class="n">first</span><span class="p">,</span><span class="w"> </span><span class="n">local_rows</span><span class="p">);</span>
+<span class="n">local_sparse</span><span class="p">.</span><span class="n">entries</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+<span class="n">local_sparse</span><span class="p">.</span><span class="n">entries</span><span class="p">.</span><span class="n">shrink_to_fit</span><span class="p">();</span>
+</code></pre></div>
+
+<p>Dentro de <code>BlockELLLocal</code>, a capacidade alocada depende das linhas e dos
+blocos locais, não da matriz inteira:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/block_ellpack_local.cpp:34-41</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="k">const</span><span class="w"> </span><span class="k">auto</span><span class="w"> </span><span class="o">&amp;</span><span class="n">set</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">columns</span><span class="p">)</span>
+<span class="w">    </span><span class="n">max_block_columns_</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">max_block_columns_</span><span class="p">,</span>
+<span class="w">                                  </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">set</span><span class="p">.</span><span class="n">size</span><span class="p">()));</span>
+<span class="k">const</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">row_capacity</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">block_rows_</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">max_block_columns_</span><span class="p">;</span>
+<span class="n">values_</span><span class="p">.</span><span class="n">assign</span><span class="p">(</span><span class="n">row_capacity</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">block_size_</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">block_size_</span><span class="p">,</span><span class="w"> </span><span class="mf">0.0</span><span class="p">);</span>
+</code></pre></div>
+
+<p><strong>Leitura distribuída.</strong> Cada rank conserva somente as entradas cujo
+intervalo de linhas pertence ao próprio rank. Para matrizes simétricas, a
+entrada espelhada também é incluída apenas quando sua linha é local:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/matrix_market.cpp:73-85</span>
+<span class="k">const</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">last_row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">first_row</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">row_count</span><span class="p">;</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">k</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">info</span><span class="p">.</span><span class="n">entries</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">k</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">first_row</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">last_row</span><span class="p">)</span>
+<span class="w">        </span><span class="n">matrix</span><span class="p">.</span><span class="n">entries</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">row</span><span class="p">,</span><span class="w"> </span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">});</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">info</span><span class="p">.</span><span class="n">symmetric</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">        </span><span class="n">col</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">first_row</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">col</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">last_row</span><span class="p">)</span>
+<span class="w">        </span><span class="n">matrix</span><span class="p">.</span><span class="n">entries</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">col</span><span class="p">,</span><span class="w"> </span><span class="n">row</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<p><strong>Comunicação seletiva.</strong> Em vez de fazer <code>MPI_Allgatherv</code> do vetor inteiro a
+cada iteração, o solver troca somente os valores das colunas remotas
+referenciadas pelos blocos locais:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/cg_mpi_distributed.cpp:187-198</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">total_send</span><span class="p">;</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="w">    </span><span class="n">send_buffer</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p_local</span><span class="p">[</span><span class="n">send_local_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
+<span class="n">MPI_Alltoallv</span><span class="p">(</span><span class="n">send_buffer</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">send_counts</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">send_displs</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span>
+<span class="w">              </span><span class="n">MPI_DOUBLE</span><span class="p">,</span><span class="w"> </span><span class="n">recv_buffer</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">recv_counts</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span>
+<span class="w">              </span><span class="n">recv_displs</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span><span class="w"> </span><span class="n">MPI_DOUBLE</span><span class="p">,</span><span class="w"> </span><span class="n">MPI_COMM_WORLD</span><span class="p">);</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">recv_global_indices</span><span class="p">.</span><span class="n">size</span><span class="p">();</span><span class="w"> </span><span class="o">++</span><span class="n">i</span><span class="p">)</span>
+<span class="w">    </span><span class="n">p_global</span><span class="p">[</span><span class="n">recv_global_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">recv_buffer</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</code></pre></div>
+
+<p>O custo dessa troca é medido diretamente no código:</p>
+<div class="codehilite"><pre><span></span><code><span class="c1">// src/cg_mpi_distributed.cpp:191-194</span>
+<span class="n">allgather_bytes</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="p">(</span><span class="n">total_send</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">recv_buffer</span><span class="p">.</span><span class="n">size</span><span class="p">())</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="kt">double</span><span class="p">);</span>
+</code></pre></div>
+
+<p>Assim, as evidências de otimização são verificáveis em quatro níveis:
+paralelismo de threads, armazenamento local, leitura por partição e
+comunicação por halo seletivo. Os ganhos medidos na seção de escalabilidade
+por nós são a validação experimental dessas escolhas.</p>
+<h2 id="validacao">Validação</h2>
+<p>Para cada execução, foi construída uma solução conhecida com <code>x_true</code> igual a
 um vetor de uns. O vetor do lado direito foi calculado como <code>b = A*x_true</code>.
-Depois do CG, foram medidos o residuo relativo explicito e o erro da solucao.</p>
+Depois do CG, foram medidos o resíduo relativo explícito e o erro da solução.</p>
 <table>
 <thead>
 <tr>
-<th>Metrica</th>
+<th>Métrica</th>
 <th style="text-align: right;">Resultado</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Execucoes validas</td>
+<td>Execuções válidas</td>
 <td style="text-align: right;">54/54</td>
 </tr>
 <tr>
-<td>Maior residuo relativo</td>
+<td>Maior resíduo relativo</td>
 <td style="text-align: right;"><code>9,92678e-09</code></td>
 </tr>
 <tr>
-<td>Maior erro da solucao</td>
+<td>Maior erro da solução</td>
 <td style="text-align: right;"><code>0,148652</code></td>
 </tr>
 <tr>
-<td>Repeticoes por grupo</td>
+<td>Repetições por grupo</td>
 <td style="text-align: right;">3</td>
 </tr>
 </tbody>
 </table>
-<p>Todos os residuos ficaram abaixo da tolerancia <code>1e-8</code>.</p>
+<p>Todos os resíduos ficaram abaixo da tolerância <code>1e-8</code>.</p>
 <h2 id="resultados">Resultados</h2>
-<p>Os dados completos estao em:</p>
+<p>Os dados completos estão em:</p>
 <div class="codehilite"><pre><span></span><code>results/processed/cg_results_tvbox.csv
 results/processed/cg_stats_tvbox.csv
 results/processed/cg_metrics_tvbox.csv
 </code></pre></div>
 
-<p>Os tempos de solucao observados variaram entre <code>1,39937 s</code> e <code>22,993 s</code>,
-dependendo da matriz e da configuracao.</p>
+<p>Os tempos de solução observados variaram entre <code>1,39937 s</code> e <code>22,993 s</code>,
+dependendo da matriz e da configuração.</p>
 <h3 id="impacto-do-tamanho-do-problema">Impacto do tamanho do problema</h3>
-<p>As matrizes nao diferem apenas em dimensao; elas tambem apresentam diferentes
-padroes de esparsidade e dificuldades de convergencia. <code>bcsstk34</code> possui 588
-linhas e terminou em aproximadamente 1,4 s nas melhores configuracoes. A
+<p>As matrizes não diferem apenas em dimensão; elas também apresentam diferentes
+padrões de esparsidade e dificuldades de convergência. <code>bcsstk34</code> possui 588
+linhas e terminou em aproximadamente 1,4 s nas melhores configurações. A
 <code>bcsstk16</code>, apesar de possuir 4.884 linhas, terminou em aproximadamente 2,16 s
-e precisou de cerca de 313 iteracoes. Ja <code>bcsstk14</code> levou aproximadamente
-16,88 s no melhor block size e precisou de cerca de 5.557 iteracoes.</p>
-<p>Isso mostra que o tempo nao depende somente do numero de linhas. O numero de
-iteracoes do CG, o padrao de nao zeros, o padding do Block ELLPACK e o
-condicionamento numerico influenciam o resultado. A comparacao entre matrizes
-e, portanto, uma comparacao de workloads estruturais diferentes, nao apenas
+e precisou de cerca de 313 iterações. Já <code>bcsstk14</code> levou aproximadamente
+16,88 s no melhor block size e precisou de cerca de 5.557 iterações.</p>
+<p>Isso mostra que o tempo não depende somente do número de linhas. O número de
+iterações do CG, o padrão de não zeros, o padding do Block ELLPACK é o
+condicionamento numérico influenciam o resultado. A comparação éntre matrizes
+e, portanto, uma comparação de workloads estruturais diferentes, não apenas
 de tamanhos diferentes.</p>
 <h3 id="melhor-block-size-por-matriz">Melhor block size por matriz</h3>
 <table>
@@ -346,7 +423,7 @@ de tamanhos diferentes.</p>
 <tr>
 <th>Matriz</th>
 <th style="text-align: right;">Block size</th>
-<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Tempo médio (s)</th>
 <th style="text-align: right;">Padding</th>
 </tr>
 </thead>
@@ -372,16 +449,16 @@ de tamanhos diferentes.</p>
 </tbody>
 </table>
 <p>O menor padding de toda a campanha foi <code>56,28%</code> e o maior foi <code>90,12%</code>.
-Isso confirma que o tamanho do bloco tem impacto importante no desperdicio de
-memoria do Block ELLPACK.</p>
+Isso confirma que o tamanho do bloco tem impacto importante no desperdício de
+memória do Block ELLPACK.</p>
 <h3 id="strong-scaling">Strong scaling</h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: right;">Processos MPI</th>
-<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Tempo médio (s)</th>
 <th style="text-align: right;">Speedup</th>
-<th style="text-align: right;">Eficiencia</th>
+<th style="text-align: right;">Eficiência</th>
 </tr>
 </thead>
 <tbody>
@@ -405,17 +482,17 @@ memoria do Block ELLPACK.</p>
 </tr>
 </tbody>
 </table>
-<p>Neste tamanho de problema, a comunicacao MPI e o custo de sincronizacao
-superam o ganho de paralelismo. O resultado nao representa uma falha de
-corretude; indica que a matriz e pequena para justificar mais processos.</p>
-<h3 id="escala-hibrida">Escala hibrida</h3>
+<p>Neste tamanho de problema, a comunicação MPI e o custo de sincronização
+superam o ganho de paralelismo. O resultado não representa uma falha de
+corretude; indica que a matriz é pequena para justificar mais processos.</p>
+<h3 id="escala-hibrida">Escala híbrida</h3>
 <table>
 <thead>
 <tr>
 <th style="text-align: right;">Threads OpenMP</th>
-<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Tempo médio (s)</th>
 <th style="text-align: right;">Speedup</th>
-<th style="text-align: right;">Eficiencia</th>
+<th style="text-align: right;">Eficiência</th>
 </tr>
 </thead>
 <tbody>
@@ -439,24 +516,24 @@ corretude; indica que a matriz e pequena para justificar mais processos.</p>
 </tr>
 </tbody>
 </table>
-<p>A versao com quatro threads foi a mais rapida. A eficiencia caiu porque o
-problema e limitado por acesso a memoria, sincronizacao e tamanho reduzido da
+<p>A versão com quatro threads foi a mais rápida. A eficiência caiu porque o
+problema é limitado por acesso a memória, sincronização e tamanho reduzido da
 matriz.</p>
-<h3 id="escalabilidade-por-nos">Escalabilidade por nos</h3>
-<p>Foi realizado um experimento complementar de escalabilidade por numero de
-nos, usando <code>bcsstk16</code>, <code>block_size=8</code> e 3 repeticoes por configuracao. Os
-workers foram distribuidos atraves de <code>nodeAffinity</code> em um pool de nos ARM64
+<h3 id="escalabilidade-por-nos">Escalabilidade por nós</h3>
+<p>Foi realizado um experimento complementar de escalabilidade por número de
+nós, usando <code>bcsstk16</code>, <code>block_size=8</code> e 3 repetições por configuração. Os
+workers foram distribuídos através de <code>nodeAffinity</code> em um pool de nós ARM64
 (<code>tvbox02</code>, <code>tvbox03</code>, <code>cluster-tvbox-04</code>, <code>cluster-tvbox-05</code>), e o launcher
 foi fixado em <code>tvbox01</code>. Para <code>nodes == mpi</code> foi usado <code>podAntiAffinity</code> para
-garantir exatamente um worker por no.</p>
+garantir exatamente um worker por nó.</p>
 <table>
 <thead>
 <tr>
-<th style="text-align: right;">Nos</th>
+<th style="text-align: right;">Nós</th>
 <th style="text-align: right;">MPI</th>
-<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Tempo médio (s)</th>
 <th style="text-align: right;">Speedup</th>
-<th style="text-align: right;">Eficiencia</th>
+<th style="text-align: right;">Eficiência</th>
 </tr>
 </thead>
 <tbody>
@@ -490,35 +567,35 @@ garantir exatamente um worker por no.</p>
 </tr>
 </tbody>
 </table>
-<p>A configuracao de referencia foi <code>1 no + 2 processos MPI</code>. O speedup
-superlinear observado em <code>2 nos</code> (2,19x) indica que o kernel SpMV e
-fortemente memory-bound: ao distribuir o trabalho entre nos distintos, cada
-processo usa o cache e a largura de banda local de um nos proprio, em vez
-de competir com outro processo pelo mesmo canal de memoria.</p>
-<p>A configuracao <code>2 nos + 4 processos</code> apresentou o pior desempenho porque
-dobrou o numero de workers por no. Dois processos MPI por nos TVBox competem
-pelos quatro cores fisicos e pela memoria compartilhada, elevando o tempo
-para 7,9s. Esse resultado confirma que a localizacao dos processos importa
+<p>A configuração de referência foi <code>1 nó + 2 processos MPI</code>. O speedup
+superlinear observado em <code>2 nós</code> (2,19x) indica que o kernel SpMV e
+fortemente memory-bound: ao distribuir o trabalho entre nós distintos, cada
+processo usa o cache e a largura de banda local de um nó próprio, em vez
+de competir com outro processo pelo mesmo canal de memória.</p>
+<p>A configuração <code>2 nós + 4 processos</code> apresentou o pior desempenho porque
+dobrou o número de workers por nó. Dois processos MPI por nós TVBox competem
+pelos quatro cores físicos e pela memória compartilhada, elevando o tempo
+para 7,9s. Esse resultado confirma que a localização dos processos importa
 tanto quanto a quantidade total.</p>
-<p>Em <code>4 nos</code>, o speedup voltou a 2,05x. A eficiencia cai para <code>0,512</code> porque
-cada iteracao do CG exige <code>MPI_Allgatherv</code> e <code>MPI_Allreduce</code>, e o custo
-dessas sincronizacoes entre quatro nos via rede cresce proporcionalmente.
-Ainda assim, foi a configuracao mais rapida com <code>4</code> processos.</p>
-<p><img alt="Tempo por nos" src="../results/plots/tvbox-nodes/time_by_nodes.png"></p>
-<p><strong>Historia do grafico:</strong> o eixo horizontal mostra o numero de nos distintos
+<p>Em <code>4 nós</code>, o speedup voltou a 2,05x. A eficiência cai para <code>0,512</code> porque
+cada iteração do CG exige <code>MPI_Allgatherv</code> e <code>MPI_Allreduce</code>, e o custo
+dessas sincronizações entre quatro nós via rede cresce proporcionalmente.
+Ainda assim, foi a configuração mais rápida com <code>4</code> processos.</p>
+<p><img alt="Tempo por nós" src="../results/plots/tvbox-nodes/time_by_nodes.png"></p>
+<p><strong>História do gráfico:</strong> o eixo horizontal mostra o número de nós distintos
 onde os workers MPI foram agendados. A linha laranja (<code>MPI=2</code>) parte de
-<code>4,75s</code> com um no e cai para <code>2,17s</code> com dois nos, reduzindo o tempo em mais
-da metade. A linha azul (<code>MPI=4</code>) partiria de co-location em dois nos com
-<code>7,92s</code> e desce para <code>2,32s</code> em quatro nos distintos. O grafico demonstra
-que espalhar processos por mais nos vence todas as versoes com concentracao
-no mesmo nos.</p>
-<p><img alt="Speedup e eficiencia por nos" src="../results/plots/tvbox-nodes/speedup_efficiency_by_nodes.png"></p>
-<p><strong>Historia do grafico:</strong> a linha ideal mostraria speedup proporcional ao
-numero de nos. O speedup medido com <code>MPI=4</code> fica abaixo do ideal em todas as
-configuracoes: a 2 nos ele e inferior a 1 (aumentar workers sem espalhar
-piora), e a 4 nos chega a 2,05x. A eficiencia revela o custo real da
-comunicacao MPI entre maquinas: cai para <code>0,30</code> quando ha co-location e sobe
-apenas para <code>0,51</code> com nos distintos.</p>
+<code>4,75s</code> com um não é cai para <code>2,17s</code> com dois nós, reduzindo o tempo em mais
+da metade. A linha azul (<code>MPI=4</code>) partiria de co-location em dois nós com
+<code>7,92s</code> e desce para <code>2,32s</code> em quatro nós distintos. O gráfico demonstra
+que espalhar processos por mais nós vence todas as versões com concentração
+no mesmo nós.</p>
+<p><img alt="Speedup e eficiência por nós" src="../results/plots/tvbox-nodes/speedup_efficiency_by_nodes.png"></p>
+<p><strong>História do gráfico:</strong> a linha ideal mostraria speedup proporcional ao
+número de nós. O speedup medido com <code>MPI=4</code> fica abaixo do ideal em todas as
+configurações: a 2 nós ele é inferior a 1 (aumentar workers sem espalhar
+piora), e a 4 nós chega a 2,05x. A eficiência revela o custo real da
+comunicação MPI entre máquinas: cai para <code>0,30</code> quando há co-location e sobe
+apenas para <code>0,51</code> com nós distintos.</p>
 <p>Logs e manifestos deste experimento:</p>
 <div class="codehilite"><pre><span></span><code>results/node-scaling-20261116T032812Z/
 </code></pre></div>
@@ -527,42 +604,42 @@ apenas para <code>0,51</code> com nos distintos.</p>
 <div class="codehilite"><pre><span></span><code>results/processed/cg_node_scaling_tvbox.csv
 </code></pre></div>
 
-<h3 id="block-ellpack-distribuido-fisicamente">Block ELLPACK distribuido fisicamente</h3>
-<p>A implementacao inicial do solver mantinha o Block ELLPACK <strong>replicado em
+<h3 id="block-ellpack-distribuido-fisicamente">Block ELLPACK distribuído fisicamente</h3>
+<p>A implementação inicial do solver mantinha o Block ELLPACK <strong>replicado em
 cada processo MPI</strong>: todos os ranks liam o arquivo Matrix Market inteiro e
-construiam a estrutura completa; somente o calculo do SpMV era particionado
-por linhas. Isso limitava a escalabilidade para matrizes maiores e geraba
+construiam a estrutura completa; somente o cálculo do SpMV era particionado
+por linhas. Isso limitava a escalabilidade para matrizes maiores e gerava
 I/O redundante na leitura.</p>
 <p>Para resolver esse gargalo foi implementada a variante <code>cg_mpi_distributed</code>,
-disponivel na imagem <code>srmarinho/cg-mpi:arm64-dist</code>. A nova variante:</p>
+disponível na imagem <code>srmarinho/cg-mpi:arm64-dist</code>. A nova variante:</p>
 <ul>
-<li><strong>Le o arquivo Matrix Market de forma filtrada:</strong> cada rank percorre o
+<li><strong>Lê o arquivo Matrix Market de forma filtrada:</strong> cada rank percorre o
   arquivo e armazena apenas as triplas cuja linha (ou coluna espelhada, no
-  caso simetrico) pertence ao seu intervalo local
+  caso simétrico) pertence ao seu intervalo local
   <code>[first_row, first_row + row_count)</code>.</li>
-<li><strong>Constroi um Block ELLPACK local:</strong> a estrutura <code>BlockELLLocal</code> aloca
+<li><strong>Constrói um Block ELLPACK local:</strong> a estrutura <code>BlockELLLocal</code> aloca
   apenas os blocos de linhas locais; <code>max_block_columns</code> passa a ser
   calculado localmente, o que em geral reduz o padding.</li>
-<li><strong>Realiza comunicacao seletiva:</strong> antes de cada SpMV, cada rank troca com
+<li><strong>Realiza comunicação seletiva:</strong> antes de cada SpMV, cada rank troca com
   <code>MPI_Alltoallv</code> somente os valores das colunas globais que de fato aparecem
-  em seus blocos locais. O <code>MPI_Allgatherv</code> da variante replicated nao e mais
-  executado; a implementacao atual ainda usa um buffer global <code>p_global</code> para
-  compatibilidade do SpMV, mas preenche apenas as posicoes necessarias.</li>
-<li><strong>Reporta metricas de memoria e comunicacao:</strong> <code>memory_max_mb</code>,
+  em seus blocos locais. O <code>MPI_Allgatherv</code> da variante replicated não é mais
+  executado; a implementação atual ainda usa um buffer global <code>p_global</code> para
+  compatibilidade do SpMV, mas preenche apenas as posições necessárias.</li>
+<li><strong>Reporta métricas de memória e comunicação:</strong> <code>memory_max_mb</code>,
   <code>memory_avg_mb</code>, <code>memory_total_mb</code>, <code>comm_bytes</code>.</li>
 </ul>
-<p>Para avaliar o impacto, o experimento de escalabilidade por nos foi
-re-executado com a variante distribuida, mantendo o mesmo pool de nos,
-matriz <code>bcsstk16</code>, block size 8 e 3 repeticoes.</p>
+<p>Para avaliar o impacto, o experimento de escalabilidade por nós foi
+reexecutado com a variante distribuída, mantendo o mesmo pool de nós,
+matriz <code>bcsstk16</code>, block size 8 e 3 repetições.</p>
 <table>
 <thead>
 <tr>
 <th>Variante</th>
-<th style="text-align: right;">Nos</th>
+<th style="text-align: right;">Nós</th>
 <th style="text-align: right;">MPI</th>
-<th style="text-align: right;">Tempo medio (s)</th>
-<th style="text-align: right;">Speedup vs 1 no MPI=2</th>
-<th style="text-align: right;">Memoria max por rank (MB)</th>
+<th style="text-align: right;">Tempo médio (s)</th>
+<th style="text-align: right;">Speedup vs 1 nó MPI=2</th>
+<th style="text-align: right;">Memória max por rank (MB)</th>
 </tr>
 </thead>
 <tbody>
@@ -632,33 +709,33 @@ matriz <code>bcsstk16</code>, block size 8 e 3 repeticoes.</p>
 </tr>
 </tbody>
 </table>
-<p>A variante distribuida vence a replicated em todas as configuracoes multi-no:</p>
+<p>A variante distribuída vence a replicated em todas as configurações multi-nó:</p>
 <ul>
-<li><strong>2 nos, MPI=2:</strong> 1,53s contra 2,17s (ganho de <strong>30%</strong>).</li>
-<li><strong>2 nos, MPI=4:</strong> 7,00s contra 7,92s (ganho de <strong>13%</strong>).</li>
-<li><strong>4 nos, MPI=4:</strong> 1,30s contra 2,32s (ganho de <strong>44%</strong>).</li>
+<li><strong>2 nós, MPI=2:</strong> 1,53s contra 2,17s (ganho de <strong>30%</strong>).</li>
+<li><strong>2 nós, MPI=4:</strong> 7,00s contra 7,92s (ganho de <strong>13%</strong>).</li>
+<li><strong>4 nós, MPI=4:</strong> 1,30s contra 2,32s (ganho de <strong>44%</strong>).</li>
 </ul>
-<p>Em 4 nos com MPI=4, o speedup real salta de 2,05x (replicada) para
-<strong>3,65x</strong> (distribuida), muito proximo do ideal de 4x. A economia de
-memoria por rank cai de ~7,25 MB (matriz inteira replicada) para 1,82 MB
+<p>Em 4 nós com MPI=4, o speedup real salta de 2,05x (replicada) para
+<strong>3,65x</strong> (distribuída), muito próximo do ideal de 4x. A economia de
+memória por rank cai de ~7,25 MB (matriz inteira replicada) para 1,82 MB
 (particionada), ou seja, <strong>menos de 25%</strong> da pegada original.</p>
-<p>No caso de 1 no, as duas variantes tem desempenho semelhante (<code>-2,7%</code>
-dentro do ruido de medicao), o que confirma que o overhead da comunicacao
-seletiva e marginal quando todos os ranks estao no mesmo host.</p>
+<p>No caso de 1 nó, as duas variantes tem desempenho semelhante (<code>-2,7%</code>
+dentro do ruído de medição), o que confirma que o overhead da comunicação
+seletiva é marginal quando todos os ranks estão no mesmo host.</p>
 <h3 id="matriz-maior-bcsstk17">Matriz maior: bcsstk17</h3>
 <p>Para demonstrar o comportamento em um problema maior, foi adicionada a matriz
 <code>bcsstk17</code> (10.974 x 10.974, 428.650 <code>nnz</code> expandido), representando um vaso
-de pressao elevado. Foram executadas 3 repeticoes da variante distributed com
+de pressão elevado. Foram executadas 3 repetições da variante distributed com
 2 processos MPI, <code>block_size=8</code> e uma thread OpenMP.</p>
 <table>
 <thead>
 <tr>
 <th>Matriz</th>
-<th style="text-align: right;">Tempo medio (s)</th>
-<th style="text-align: right;">Iteracoes</th>
-<th style="text-align: right;">Residuo relativo</th>
-<th style="text-align: right;">Memoria total (MB)</th>
-<th style="text-align: right;">Memoria max/rank (MB)</th>
+<th style="text-align: right;">Tempo médio (s)</th>
+<th style="text-align: right;">Iterações</th>
+<th style="text-align: right;">Resíduo relativo</th>
+<th style="text-align: right;">Memória total (MB)</th>
+<th style="text-align: right;">Memória max/rank (MB)</th>
 </tr>
 </thead>
 <tbody>
@@ -672,33 +749,33 @@ de pressao elevado. Foram executadas 3 repeticoes da variante distributed com
 </tr>
 </tbody>
 </table>
-<p>O solver atingiu o limite de 10.000 iteracoes antes de atingir a tolerancia
-<code>1e-8</code>, terminando com residuo <code>1,18466e-06</code>. Este caso e reportado como
-stress test de memoria e convergencia, nao como uma validacao aprovada pela
-tolerancia principal. Mesmo sem convergir dentro do limite, a variante
+<p>O solver atingiu o limite de 10.000 iterações antes de atingir a tolerância
+<code>1e-8</code>, terminando com resíduo <code>1,18466e-06</code>. Este caso é reportado como
+stress test de memória e convergência, não como uma validação aprovada pela
+tolerância principal. Mesmo sem convergir dentro do limite, a variante
 distributed manteve a corretude estrutural e usou aproximadamente metade da
-memoria maxima por rank esperada na versao replicada.</p>
-<p>Os dados deste teste estao em <code>results/processed/bcsstk17_dist.csv</code>.</p>
-<p><img alt="Comparacao de tempo" src="../results/plots/tvbox-nodes-compare/time_compare_mpi4.png"></p>
-<p><strong>Historia do grafico:</strong> o grafico contrasta o tempo medio de solucao para
-<code>MPI=4</code> entre replicated e distributed. Em <code>2 nos</code>, a versao distribuida
-reduz o tempo em 0,9s. Em <code>4 nos</code>, a reducao e de 1,0s - mais que a
-metade do tempo original. A diferenca cresce com o numero de nos porque a
+memória máxima por rank esperada na versão replicada.</p>
+<p>Os dados deste teste estão em <code>results/processed/bcsstk17_dist.csv</code>.</p>
+<p><img alt="Comparação de tempo" src="../results/plots/tvbox-nodes-compare/time_compare_mpi4.png"></p>
+<p><strong>História do gráfico:</strong> o gráfico contrasta o tempo médio de solução para
+<code>MPI=4</code> entre replicated e distributed. Em <code>2 nós</code>, a versão distribuída
+reduz o tempo em 0,9s. Em <code>4 nós</code>, a redução é de 1,0s - mais que a
+metade do tempo original. A diferença cresce com o número de nós porque a
 replicated faz <code>MPI_Allgatherv</code> sobre o vetor global inteiro a cada
-iteracao, enquanto a distributed envia apenas as colunas realmente
-necessarias.</p>
-<p><img alt="Memoria por rank" src="../results/plots/tvbox-nodes-compare/memory_per_rank.png"></p>
-<p><strong>Historia do grafico:</strong> a linha azul mostra a memoria maxima por rank
-na variante distribuida. Com <code>MPI=2</code> cada rank usa 3,62 MB e com <code>MPI=4</code>
+iteração, enquanto a distributed envia apenas as colunas realmente
+necessárias.</p>
+<p><img alt="Memória por rank" src="../results/plots/tvbox-nodes-compare/memory_per_rank.png"></p>
+<p><strong>História do gráfico:</strong> a linha azul mostra a memória máxima por rank
+na variante distribuída. Com <code>MPI=2</code> cada rank usa 3,62 MB e com <code>MPI=4</code>
 cada rank usa 1,82 MB, aproximadamente metade. A linha pontilhada em 7,25
 MB representa a estimativa da variante replicated, onde cada rank armazena
-a matriz inteira independentemente do numero de processos.</p>
+a matriz inteira independentemente do número de processos.</p>
 <p><img alt="Speedup comparado" src="../results/plots/tvbox-nodes-compare/speedup_compare.png"></p>
-<p><strong>Historia do grafico:</strong> o eixo vertical mostra o speedup contra a
-referencia de 1 no e <code>MPI=2</code>. Com 4 nos e <code>MPI=4</code>, a versao distribuida
-atinge 3,65x - muito proxima da linha ideal (gray dashed). A versao
+<p><strong>História do gráfico:</strong> o eixo vertical mostra o speedup contra a
+referência de 1 não é <code>MPI=2</code>. Com 4 nós e <code>MPI=4</code>, a versão distribuída
+atinge 3,65x - muito próxima da linha ideal (gray dashed). A versão
 replicated chega apenas a 2,05x.</p>
-<p>Logs e manifestos da campanha distribuida:</p>
+<p>Logs e manifestos da campanha distribuída:</p>
 <div class="codehilite"><pre><span></span><code>results/node-scaling-dist-20261116T145412Z/
 </code></pre></div>
 
@@ -706,125 +783,125 @@ replicated chega apenas a 2,05x.</p>
 <div class="codehilite"><pre><span></span><code>results/processed/cg_node_scaling_compare.csv
 </code></pre></div>
 
-<h3 id="graficos">Graficos</h3>
-<h4 id="como-ler-os-graficos">Como ler os graficos</h4>
-<p>Todos os pontos representam a media de tres execucoes. As barras de erro
-representam o desvio padrao entre as repeticoes. Cada caixa combina os valores
-do ponto com uma frase curta sobre o fenomeno observado.</p>
-<p>Nos graficos de tempo, o valor dentro da caixa e o tempo medio em segundos.
-Nos graficos de escala, <code>S</code> significa speedup e <code>E</code> significa eficiencia. A
+<h3 id="graficos">Gráficos</h3>
+<h4 id="como-ler-os-graficos">Como ler os gráficos</h4>
+<p>Todos os pontos representam a média de três execuções. As barras de erro
+representam o desvio padrão entre as repetições. Cada caixa combina os valores
+do ponto com uma frase curta sobre o fenômeno observado.</p>
+<p>Nos gráficos de tempo, o valor dentro da caixa é o tempo médio em segundos.
+Nos gráficos de escala, <code>S</code> significa speedup e <code>E</code> significa eficiência. A
 linha pontilhada mostra o comportamento ideal: dobrar os recursos deveria
-dobrar o speedup. No grafico de padding, <code>pad</code> e a porcentagem de zeros
-adicionados pelo Block ELLPACK, nao zeros existentes no dataset original.</p>
+dobrar o speedup. No gráfico de padding, <code>pad</code> é a porcentagem de zeros
+adicionados pelo Block ELLPACK, não zeros existentes no dataset original.</p>
 <p><img alt="Tempo por block size" src="../results/plots/tvbox/solve_time_by_block.png"></p>
-<p><strong>Historia do grafico:</strong> cada linha parte do bloco 4 e avanca para os blocos 8,
-16 e 32. O ponto de cada matriz representa a media de tres execucoes; as barras
-mostram a variacao entre essas repeticoes. O bloco 4 aparece como a melhor
-escolha nas tres matrizes porque mantem a estrutura mais proxima do padrao real
-de nao zeros. Quando o bloco aumenta, o ELLPACK precisa reservar mais espaco
-uniforme para linhas que possuem padroes diferentes. Isso aumenta o padding,
+<p><strong>História do gráfico:</strong> cada linha parte do bloco 4 e avança para os blocos 8,
+16 e 32. O ponto de cada matriz representa a média de três execuções; as barras
+mostram a variação entre essas repetições. O bloco 4 aparece como a melhor
+escolha nas três matrizes porque mantém a estrutura mais próxima do padrão real
+de não zeros. Quando o bloco aumenta, o ELLPACK precisa reservar mais espaço
+uniforme para linhas que possuem padrões diferentes. Isso aumenta o padding,
 as leituras de zeros e o trabalho do SpMV. A matriz <code>bcsstk14</code> evidencia mais
-o custo porque e maior e permanece muito esparsa.</p>
+o custo porque é maior e permanece muito esparsa.</p>
 <p><img alt="Strong scaling" src="../results/plots/tvbox/strong_scaling_time.png"></p>
-<p><strong>Historia do grafico:</strong> aumentar de 1 para 2 e 4 processos MPI nao reduziu o
-tempo neste problema. Cada iteracao precisa reunir <code>p</code> com <code>MPI_Allgatherv</code> e
+<p><strong>História do gráfico:</strong> aumentar de 1 para 2 e 4 processos MPI não reduziu o
+tempo neste problema. Cada iteração precisa reunir <code>p</code> com <code>MPI_Allgatherv</code> e
 sincronizar produtos escalares com <code>MPI_Allreduce</code>. Para <code>bcsstk16</code>, esse custo
-de comunicacao foi maior que o ganho do processamento paralelo.</p>
-<p><img alt="Speedup e eficiencia MPI" src="../results/plots/tvbox/strong_scaling_speedup_efficiency.png"></p>
-<p><strong>Historia do grafico:</strong> a linha ideal subiria proporcionalmente ao numero de
+de comunicação foi maior que o ganho do processamento paralelo.</p>
+<p><img alt="Speedup e eficiência MPI" src="../results/plots/tvbox/strong_scaling_speedup_efficiency.png"></p>
+<p><strong>História do gráfico:</strong> a linha ideal subiria proporcionalmente ao número de
 processos. A curva medida fica abaixo de 1 a partir de dois processos, e a
-eficiencia cai para <code>0,230</code> com quatro processos. Isso mostra que adicionar
-processos nao e automaticamente uma aceleracao: o tamanho da matriz e a
-frequencia das sincronizacoes dominam o tempo.</p>
-<p><img alt="Speedup e eficiencia OpenMP" src="../results/plots/tvbox/hybrid_scaling_speedup_efficiency.png"></p>
-<p><strong>Historia do grafico:</strong> dentro de cada processo, OpenMP foi mais efetivo que
+eficiência cai para <code>0,230</code> com quatro processos. Isso mostra que adicionar
+processos não é automaticamente uma aceleração: o tamanho da matriz e a
+frequência das sincronizações dominam o tempo.</p>
+<p><img alt="Speedup e eficiência OpenMP" src="../results/plots/tvbox/hybrid_scaling_speedup_efficiency.png"></p>
+<p><strong>História do gráfico:</strong> dentro de cada processo, OpenMP foi mais efetivo que
 a escala MPI neste caso. Duas threads produziram speedup de <code>1,299x</code> e quatro
-threads chegaram a <code>1,447x</code>. A eficiencia, porem, caiu para <code>0,362</code>, porque as
-threads compartilham largura de banda e o problema nao possui trabalho
+threads chegaram a <code>1,447x</code>. A eficiência, porém, caiu para <code>0,362</code>, porque as
+threads compartilham largura de banda e o problema não possui trabalho
 suficiente para escalar idealmente.</p>
 <p><img alt="Padding Block ELLPACK" src="../results/plots/tvbox/padding_by_block.png"></p>
-<p><strong>Historia do grafico:</strong> as tres curvas mostram a quantidade de espaco que nao
-corresponde a entradas reais da matriz. No inicio, com bloco 4, o padding e
-menor porque cada grupo de linhas precisa acomodar menos combinacoes de
-colunas. Durante a progressao para blocos 8 e 16, o formato ganha regularidade
-de acesso, mas passa a preencher mais posicoes vazias. No fim, com bloco 32,
+<p><strong>História do gráfico:</strong> as três curvas mostram a quantidade de espaço que não
+corresponde a entradas reais da matriz. No início, com bloco 4, o padding e
+menor porque cada grupo de linhas precisa acomodar menos combinações de
+colunas. Durante a progressão para blocos 8 e 16, o formato ganha regularidade
+de acesso, mas passa a preencher mais posições vazias. No fim, com bloco 32,
 o custo fica maior: em <code>bcsstk16</code> o padding chega a <code>83,15%</code>, enquanto o maior
-valor observado na campanha chega a <code>90,12%</code>. Esses zeros nao fazem parte do
-problema estrutural; sao memoria e leituras adicionais introduzidas pelo
-Block ELLPACK. O grafico, portanto, explica por que o menor block size foi o
-melhor compromisso nos tempos medidos.</p>
+valor observado na campanha chega a <code>90,12%</code>. Esses zeros não fazem parte do
+problema estrutural; são memória e leituras adicionais introduzidas pelo
+Block ELLPACK. O gráfico, portanto, explica por que o menor block size foi o
+melhor compromisso nós tempos medidos.</p>
 <h3 id="custos-observados">Custos observados</h3>
-<p>O <code>MPI_Allgatherv</code> e executado a cada iteracao para disponibilizar o vetor
-global <code>p</code>. Tambem existem dois <code>MPI_Allreduce</code> por iteracao para produtos
-escalares. Esses pontos de sincronizacao explicam parte da ausencia de ganho
-no strong scaling da variante replicated. Na variante distributed, o
-<code>MPI_Allgatherv</code> foi substituido por pedidos e valores seletivos com
-<code>MPI_Alltoallv</code>; o numero de bytes trocados passou a ser registrado em
+<p>O <code>MPI_Allgatherv</code> é executado a cada iteração para disponibilizar o vetor
+global <code>p</code>. Tambem existem dois <code>MPI_Allreduce</code> por iteração para produtos
+escalares. Esses pontos de sincronização explicam parte da ausencia de ganho
+nó strong scaling da variante replicated. Na variante distributed, o
+<code>MPI_Allgatherv</code> foi substituído por pedidos e valores seletivos com
+<code>MPI_Alltoallv</code>; o número de bytes trocados passou a ser registrado em
 <code>comm_bytes</code>.</p>
-<p>O padding do Block ELLPACK e outro gargalo: cada bloco armazena uma quantidade
+<p>O padding do Block ELLPACK é outro gargalo: cada bloco armazena uma quantidade
 fixa de valores, incluindo zeros de preenchimento. Para matrizes maiores ou
-mais irregulares, uma comparacao com CSR ou SELL-C-sigma e uma otimizacao
+mais irregulares, uma comparação com CSR ou SELL-C-sigma e uma otimização
 futura relevante.</p>
-<h2 id="analise">Analise</h2>
+<h2 id="analise">Análise</h2>
 <p>O solver foi melhorado para paralelizar com OpenMP os produtos escalares, as
-atualizacoes de <code>x</code>, <code>r</code> e <code>p</code>, e o calculo dos erros de validacao. O <code>SpMV</code>
-usa <code>schedule(static)</code> e o mesmo numero de threads informado por
+atualizações de <code>x</code>, <code>r</code> e <code>p</code>, e o cálculo dos erros de validação. O <code>SpMV</code>
+usa <code>schedule(static)</code> e o mesmo número de threads informado por
 <code>--threads</code>.</p>
-<p>O comportamento observado e coerente com um kernel SpMV memory-bound. A
-redundancia de leituras causada pelo padding e a comunicacao global por
-iteracao limitam o aproveitamento de mais processos MPI. A escala OpenMP
-apresentou ganho mais consistente neste ambiente, embora a eficiencia tambem
+<p>O comportamento observado é coerente com um kernel SpMV memory-bound. A
+redundância de leituras causada pelo padding e a comunicação global por
+iteração limitam o aproveitamento de mais processos MPI. A escala OpenMP
+apresentou ganho mais consistente neste ambiente, embora a eficiência também
 caia com quatro threads.</p>
 <h3 id="desbalanceamento-de-carga">Desbalanceamento de carga</h3>
-<p>A distribuicao por linhas contiguas fornece balanceamento aproximado pelo
-numero de linhas, mas nao garante o mesmo numero de entradas ou blocos em cada
-rank. O padding local e o numero de colunas de bloco podem variar entre
-intervalos. Na variante distributed, <code>max_block_columns</code> e calculado
-localmente, o que reduz memoria, mas tambem torna importante acompanhar o
-maior consumo por rank. Os experimentos por nos mostram outro tipo de
-desbalanceamento: colocar dois workers no mesmo no aumentou o tempo para
-7,915 s, enquanto espalhar os mesmos quatro processos em quatro nos reduziu o
+<p>A distribuição por linhas contiguas fornece balanceamento apróximado pelo
+número de linhas, mas não garante o mesmo número de entradas ou blocos em cada
+rank. O padding local e o número de colunas de bloco podem variar entre
+intervalos. Na variante distributed, <code>max_block_columns</code> é calculado
+localmente, o que reduz memória, mas também torna importante acompanhar o
+maior consumo por rank. Os experimentos por nós mostram outro tipo de
+desbalanceamento: colocar dois workers no mesmo nó aumentou o tempo para
+7,915 s, enquanto espalhar os mesmos quatro processos em quatro nós reduziu o
 tempo para 2,321 s na variante replicated.</p>
 <h3 id="reprodutibilidade">Reprodutibilidade</h3>
-<p>Os comandos, filas, manifests, logs, CSVs e graficos estao preservados no
-repositorio. A campanha principal usa <code>scripts/run_k3s_campaign.sh</code>; a fila
-retomavel usa <code>scripts/run_queue.sh</code>; a campanha de nos usa
+<p>Os comandos, filas, manifests, logs, CSVs e gráficos estão preservados nó
+repositório. A campanha principal usa <code>scripts/run_k3s_campaign.sh</code>; a fila
+retomável usa <code>scripts/run_queue.sh</code>; a campanha de nós usa
 <code>scripts/run_node_scaling.sh</code> e sua variante distributed usa
-<code>scripts/run_node_scaling_dist.sh</code>. A imagem distribuida esta publicada como
-<code>srmarinho/cg-mpi:arm64-dist</code>. Os resultados finais incluem os nomes dos nos
-observados em <code>pod-placement.txt</code> e os parametros originais nos manifests.</p>
-<h2 id="limitacoes-e-trabalho-futuro">Limitacoes E Trabalho Futuro</h2>
+<code>scripts/run_node_scaling_dist.sh</code>. A imagem distribuída esta publicada como
+<code>srmarinho/cg-mpi:arm64-dist</code>. Os resultados finais incluem os nomes dos nós
+observados em <code>pod-placement.txt</code> e os parâmetros originais nos manifests.</p>
+<h2 id="limitacoes-e-trabalho-futuro">Limitações e Trabalho Futuro</h2>
 <ul>
-<li>A variante distributed implementa a Fase 3a: o vetor <code>p_global</code> ainda e um
-  buffer de tamanho global, embora somente as colunas necessarias sejam
+<li>A variante distributed implementa a Fase 3a: o vetor <code>p_global</code> ainda é um
+  buffer de tamanho global, embora somente as colunas necessárias sejam
   preenchidas e comunicadas. A Fase 3b pode compactar esse vetor em um
   <code>p_view</code> local.</li>
-<li>OpenBLAS esta linkado e disponivel, mas os produtos escalares e atualizacoes
-  principais usam kernels C++ com OpenMP. Uma comparacao direta com <code>ddot</code> e
+<li>OpenBLAS esta linkado e disponível, mas os produtos escalares e atualizações
+  principais usam kernels C++ com OpenMP. Uma comparação direta com <code>ddot</code> e
   <code>daxpy</code> e uma etapa futura.</li>
-<li>O Block ELLPACK distribuido deve ser comparado com CSR e SELL-C-sigma em
+<li>O Block ELLPACK distribuído deve ser comparado com CSR e SELL-C-sigma em
   matrizes maiores.</li>
-<li><code>bcsstk17</code> nao atingiu <code>1e-8</code> em 10.000 iteracoes; um estudo de tolerancia,
-  precondicionamento e <code>max-iters</code> maior seria necessario para uma validacao
-  numerica completa desse caso.</li>
+<li><code>bcsstk17</code> não atingiu <code>1e-8</code> em 10.000 iterações; um estudo de tolerância,
+  precondicionamento e <code>max-iters</code> maior seria necessário para uma validação
+  numérica completa desse caso.</li>
 </ul>
-<h2 id="conclusao">Conclusao</h2>
-<p>O projeto entrega uma implementacao distribuida funcional de Gradiente
+<h2 id="conclusao">Conclusão</h2>
+<p>O projeto entrega uma implementação distribuída funcional de Gradiente
 Conjugado com MPI, OpenMP e duas variantes de Block ELLPACK. A campanha
-principal teve 54 execucoes validas; o experimento por nos teve 12 execucoes
-replicated; e a comparacao distributed teve outras 12 execucoes validas. Os
-residuos das campanhas de bcsstk34, bcsstk14 e bcsstk16 ficaram abaixo de
-<code>1e-8</code>, e os resultados foram preservados em CSV, estatisticas, logs e
-graficos.</p>
-<p>Os experimentos mostram que a escolha do block size e mais importante que
-simplesmente aumentar o numero de processos MPI na variante replicated. A
-variante distributed resolve a principal limitacao de memoria: com 4 nos e
+principal teve 54 execuções válidas; o experimento por nós teve 12 execuções
+replicated; e a comparação distributed teve outras 12 execuções válidas. Os
+resíduos das campanhas de bcsstk34, bcsstk14 e bcsstk16 ficaram abaixo de
+<code>1e-8</code>, e os resultados foram preservados em CSV, estatísticas, logs e
+gráficos.</p>
+<p>Os experimentos mostram que a escolha do block size é mais importante que
+simplesmente aumentar o número de processos MPI na variante replicated. A
+variante distributed resolve a principal limitação de memória: com 4 nós e
 MPI=4, reduziu o tempo de 2,321s para 1,301s, aumentou o speedup de 2,05x
-para 3,65x e reduziu a memoria maxima por rank de aproximadamente 7,25 MB
+para 3,65x e reduziu a memória máxima por rank de aproximadamente 7,25 MB
 para 1,82 MB.</p>
-<p>O trabalho tambem demonstrou que a localizacao dos processos e importante:
-co-location de dois workers por no degradou o desempenho, enquanto a
-distribuicao pelos nos distintos recuperou escalabilidade proxima do ideal.
+<p>O trabalho também demonstrou que a localização dos processos e importante:
+co-location de dois workers por nó degradou o desempenho, enquanto a
+distribuição pelos nós distintos recuperou escalabilidade próxima do ideal.
 Como trabalho futuro, recomenda-se compactar o <code>p_view</code> da Fase 3b, comparar
 com CSR/SELL-C-sigma, integrar <code>ddot</code>/<code>daxpy</code> do OpenBLAS diretamente e usar
 precondicionamento para matrizes maiores como <code>bcsstk17</code>.</p>
