@@ -197,3 +197,50 @@ Foram gerados cinco graficos em `results/plots/tvbox/` para tempo por bloco,
 strong scaling, speedup, eficiencia, escala hibrida e padding. O arquivo
 `report/report.md` foi preenchido com metodologia, validacao, tabelas,
 analise e conclusao usando somente os resultados TVBox.
+
+### Plano de acao: experimento de escalabilidade por nos
+
+A campanha realizada variou processos MPI e threads, mas nao variou
+explicitamente o numero de nos. Fica registrado como proxima etapa obrigatoria
+um experimento complementar de escalabilidade entre nos.
+
+Acoes previstas:
+
+1. Preservar as 54 execucoes atuais; elas continuam validas e nao serao
+   descartadas nem repetidas.
+2. Adicionar o campo `node_count` a fila `experiments/queue.tsv` e ao runner
+   `scripts/run_queue.sh`.
+3. Definir configuracoes controladas de nos e processos:
+
+   ```text
+   1 no  + 2 processos MPI
+   2 nos + 2 processos MPI
+   2 nos + 4 processos MPI
+   4 nos + 4 processos MPI
+   ```
+
+4. Manter fixos: matriz `bcsstk16`, `block_size=8`, `1` thread OpenMP,
+   tolerancia `1e-8` e `10000` iteracoes maximas.
+5. Fazer `3` repeticoes por configuracao.
+6. Garantir a distribuicao dos pods MPI pelos nos definidos usando regras de
+   afinidade ou topologia Kubernetes.
+7. Registrar em cada execucao os nomes reais dos nos que hospedaram os pods.
+8. Gerar um CSV especifico com os campos:
+
+   ```text
+   node_count
+   node_names
+   mpi_processes
+   omp_threads
+   solve_time
+   speedup
+   efficiency
+   ```
+
+9. Gerar graficos de tempo, speedup e eficiencia por numero de nos.
+10. Atualizar `report/report.md` com a nova analise de escalabilidade entre
+    nos.
+11. Manter explicita a limitacao atual de que cada processo MPI constroi uma
+    copia completa da matriz Block ELLPACK.
+
+Esse experimento e complementar. Nao invalida os resultados atuais.
