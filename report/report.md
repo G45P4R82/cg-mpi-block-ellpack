@@ -233,10 +233,14 @@ adicionados pelo Block ELLPACK, nao zeros existentes no dataset original.
 
 ![Tempo por block size](../results/plots/tvbox/solve_time_by_block.png)
 
-**Historia do grafico:** o bloco 4 foi o melhor para as tres matrizes. Ao
-aumentar o bloco, o formato passa a reservar mais posicoes que nao existem na
-matriz original. O resultado e mais trabalho no SpMV e mais movimentacao de
-memoria, especialmente em `bcsstk14`.
+**Historia do grafico:** cada linha parte do bloco 4 e avanca para os blocos 8,
+16 e 32. O ponto de cada matriz representa a media de tres execucoes; as barras
+mostram a variacao entre essas repeticoes. O bloco 4 aparece como a melhor
+escolha nas tres matrizes porque mantem a estrutura mais proxima do padrao real
+de nao zeros. Quando o bloco aumenta, o ELLPACK precisa reservar mais espaco
+uniforme para linhas que possuem padroes diferentes. Isso aumenta o padding,
+as leituras de zeros e o trabalho do SpMV. A matriz `bcsstk14` evidencia mais
+o custo porque e maior e permanece muito esparsa.
 
 ![Strong scaling](../results/plots/tvbox/strong_scaling_time.png)
 
@@ -263,11 +267,16 @@ suficiente para escalar idealmente.
 
 ![Padding Block ELLPACK](../results/plots/tvbox/padding_by_block.png)
 
-**Historia do grafico:** o padding cresce com o tamanho do bloco em todas as
-matrizes. Em `bcsstk16`, por exemplo, ele vai de `56,28%` no bloco 4 para
-`83,15%` no bloco 32. Esses zeros nao pertencem ao problema estrutural; sao
-espaco adicional introduzido pelo formato Block ELLPACK para manter acesso
-regular.
+**Historia do grafico:** as tres curvas mostram a quantidade de espaco que nao
+corresponde a entradas reais da matriz. No inicio, com bloco 4, o padding e
+menor porque cada grupo de linhas precisa acomodar menos combinacoes de
+colunas. Durante a progressao para blocos 8 e 16, o formato ganha regularidade
+de acesso, mas passa a preencher mais posicoes vazias. No fim, com bloco 32,
+o custo fica maior: em `bcsstk16` o padding chega a `83,15%`, enquanto o maior
+valor observado na campanha chega a `90,12%`. Esses zeros nao fazem parte do
+problema estrutural; sao memoria e leituras adicionais introduzidas pelo
+Block ELLPACK. O grafico, portanto, explica por que o menor block size foi o
+melhor compromisso nos tempos medidos.
 
 ### Custos observados
 

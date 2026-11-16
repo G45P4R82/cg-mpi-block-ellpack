@@ -87,7 +87,8 @@ def add_story(fig, text):
 
 
 fig, axis = plt.subplots()
-for matrix in sorted({row["matrix"] for row in base}):
+matrix_offsets = [(5, 8), (5, 42), (5, -38)]
+for matrix_index, matrix in enumerate(sorted({row["matrix"] for row in base})):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
     axis.errorbar(
         [row["block_size"] for row in values],
@@ -97,20 +98,14 @@ for matrix in sorted({row["matrix"] for row in base}):
         capsize=4,
         label=matrix,
     )
-    for index, row in enumerate(values):
-        descriptions = [
-            "bloco pequeno reduz zeros e tempo",
-            "bloco intermediario equilibra acesso e armazenamento",
-            "padding crescente aumenta trabalho e memoria",
-            "bloco grande amplia zeros e custo",
-        ]
-        annotate_point(
-            axis,
-            row["block_size"],
-            row["solve_mean_s"],
-            f"b={row['block_size']} | {row['solve_mean_s']:.3f}s\npad={row['padding_overhead'] * 100:.1f}%\n{descriptions[index]}",
-            (4, 8 if index % 2 == 0 else -38),
-        )
+    best = min(values, key=lambda row: row["solve_mean_s"])
+    annotate_point(
+        axis,
+        best["block_size"],
+        best["solve_mean_s"],
+        f"{matrix}: bloco {best['block_size']}\n{best['solve_mean_s']:.3f}s | pad={best['padding_overhead'] * 100:.1f}%",
+        matrix_offsets[matrix_index],
+    )
 axis.set_xlabel("Block size")
 axis.set_ylabel("Tempo medio de solucao (s)")
 axis.set_title("Tempo por block size\nCada ponto = media de 3 execucoes")
@@ -213,20 +208,22 @@ fig, axis = plt.subplots()
 for matrix in sorted({row["matrix"] for row in base}):
     values = sorted((row for row in base if row["matrix"] == matrix), key=lambda row: row["block_size"])
     axis.plot([row["block_size"] for row in values], [row["padding_overhead"] * 100 for row in values], "o-", label=matrix)
-    for index, row in enumerate(values):
-        descriptions = [
-            "bloco pequeno: menos zeros adicionados",
-            "bloco intermediario: padding comeca crescer",
-            "bloco maior: mais zeros armazenados",
-            "bloco grande: alto desperdicio de memoria",
-        ]
-        annotate_point(
-            axis,
-            row["block_size"],
-            row["padding_overhead"] * 100,
-            f"b={row['block_size']} | pad={row['padding_overhead'] * 100:.1f}%\n{descriptions[index]}",
-            (4, 8 if index % 2 == 0 else -32),
-        )
+lowest_padding = min(base, key=lambda row: row["padding_overhead"])
+highest_padding = max(base, key=lambda row: row["padding_overhead"])
+annotate_point(
+    axis,
+    lowest_padding["block_size"],
+    lowest_padding["padding_overhead"] * 100,
+    f"menor padding: {lowest_padding['matrix']}\nbloco {lowest_padding['block_size']} | {lowest_padding['padding_overhead'] * 100:.1f}%",
+    (5, 8),
+)
+annotate_point(
+    axis,
+    highest_padding["block_size"],
+    highest_padding["padding_overhead"] * 100,
+    f"maior padding: {highest_padding['matrix']}\nbloco {highest_padding['block_size']} | {highest_padding['padding_overhead'] * 100:.1f}%",
+    (-115, -38),
+)
 axis.set_xlabel("Block size")
 axis.set_ylabel("Padding (%)")
 axis.set_title("Overhead de padding do Block ELLPACK\nCada ponto = zeros adicionais na representacao")
