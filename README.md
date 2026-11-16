@@ -172,13 +172,54 @@ results/processed/cg_node_scaling_tvbox.csv
 results/plots/tvbox-nodes/
 ```
 
+## Variante Distribuida Do Block ELLPACK
+
+Alem da variante `cg_mpi` (replicated), o projeto entrega `cg_mpi_distributed`
+onde cada processo armazena apenas as linhas locais do Block ELLPACK e troca
+seletivamente as colunas necessarias via `MPI_Alltoallv`. A imagem Docker da
+variante distribuida esta em `srmarinho/cg-mpi:arm64-dist`.
+
+Fila dedicada `experiments/node-scaling-dist.tsv` e runner
+`scripts/run_node_scaling_dist.sh` executam o mesmo conjunto de
+configuracoes da fila node-scaling, mas usando o binario distribuido.
+
+```bash
+KUBE_CONTEXT=tvbox-k3s K8S_NAMESPACE=hpc-cg LAUNCHER_POOL=tvbox01 \
+  bash scripts/run_node_scaling_dist.sh
+```
+
+Comparacao direta (`bcsstk16`, block 8, 3 repeticoes):
+
+| Variante | Nos | MPI | Tempo medio (s) | Memoria max por rank (MB) |
+|---|---:|---:|---:|---:|
+| replicated | 1 | 2 | 4,751 | ~7,25 |
+| distributed | 1 | 2 | 4,881 | 3,624 |
+| replicated | 2 | 2 | 2,166 | ~7,25 |
+| distributed | 2 | 2 | **1,525** | 3,624 |
+| replicated | 4 | 4 | 2,321 | ~7,25 |
+| distributed | 4 | 4 | **1,301** | 1,824 |
+
+Com 4 nos e MPI=4, a variante distribuida e 44% mais rapida e usa menos de
+25% da memoria por rank em comparacao com a replicada.
+
+Analisador comparativo:
+
+```bash
+python3 scripts/analyze_node_scaling_compare.py \
+  results/node-scaling-20261116T032812Z \
+  results/node-scaling-dist-20261116T145412Z
+```
+
+Artefatos:
+
+```text
+results/node-scaling-dist-20261116T145412Z/
+results/processed/cg_node_scaling_compare.csv
+results/plots/tvbox-nodes-compare/
+```
+
 ## Limitacoes E Pendencias
 
-- O relatorio principal esta em `report/report.md`; o PDF ainda precisa ser
-  gerado para a entrega final.
-- Cada processo constroi uma copia completa da matriz Block ELLPACK; as linhas
-  computadas sao distribuidas, mas a matriz nao e particionada fisicamente na
-  memoria.
 - OpenBLAS esta disponivel e linkado, mas os kernels principais usam operacoes
   C++ paralelas com OpenMP em vez de chamadas diretas `ddot`/`daxpy`.
 

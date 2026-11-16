@@ -1,0 +1,38 @@
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher... Retrying
+Couldn't resolve cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher
+Resolved cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-0.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc
+Resolved cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-1.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc
+Resolved cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-2.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc
+Resolved cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-3.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc
+Warning: Permanently added '[cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-3.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-1.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-0.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-2.cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+variant=distributed
+matrix=/opt/cg/matrices/bcsstk16/bcsstk16.mtx
+rows=4884
+nnz=290378
+block_size=8
+mpi_processes=4
+omp_threads=1
+read_time_s=1.28808
+conversion_time_s=0.0410674
+solve_time_s=6.95528
+iterations=313
+relative_residual=9.8526e-09
+solution_error=0.123091
+padding_overhead=0.692101
+padding_overhead_max=0.703861
+memory_total_mb=7.2728
+memory_max_mb=1.82434
+memory_avg_mb=1.8182
+comm_bytes=3445504

@@ -294,3 +294,67 @@ scripts/analyze_node_scaling.py
 Conclusao da pendencia: o requisito de variar o numero de nos esta
 atendido. A limitacao sobre matriz replicada em cada processo permanece
 documentada como trabalho futuro.
+
+### Implementacao da variante distribuida (2026-11-16)
+
+A limitacao de matriz replicada foi resolvida com a implementacao do
+`cg_mpi_distributed`. As fases concluidas foram:
+
+1. **Fase 1 - Leitura filtrada:** `read_matrix_market_local(path, first, count)`
+   le o arquivo e armazena apenas triplas pertencentes ao intervalo local.
+2. **Fase 2 - Block ELLPACK particionado:** classe `BlockELLLocal` em
+   `include/block_ellpack_local.hpp` / `src/block_ellpack_local.cpp` aloca
+   apenas blocos das linhas locais e expoe `referenced_columns()` para o
+   halo exchange.
+3. **Fase 3a - Comunicacao seletiva:** `src/cg_mpi_distributed.cpp` calcula
+   quem possui cada coluna remota referenciada, troca pedidos com
+   `MPI_Alltoall`, troca valores com `MPI_Alltoallv` e popula somente as
+   posicoes necessarias do `p_global`.
+5. **Metricas de memoria e comunicacao:** `memory_max_mb`, `memory_avg_mb`,
+   `memory_total_mb`, `comm_bytes`, `padding_overhead` agora emitidos pelo
+   programa.
+
+Nova matriz adicionada (`bcsstk17`, 10974x10974, 428k nnz, SPD, elevated
+pressure vessel) para demonstrar ganho de memoria em matrizes maiores.
+SHA-256 do tarball registrado em `matrices/README.md`.
+
+Imagem Docker ARM64 publicada em `srmarinho/cg-mpi:arm64-dist` com ambos
+binarios (`cg_mpi` e `cg_mpi_distributed`).
+
+Experimento comparativo executado no TVBox (12 jobs distribuido + 12 jobs
+replicated ja existentes) no mesmo pool de nos (`tvbox02`, `tvbox03`,
+`cluster-tvbox-04`, `cluster-tvbox-05`), launcher em `tvbox01`.
+
+Resultados (`bcsstk16`, block 8):
+
+```text
+Config          replicated        distributed       ganho
+1 no  / MPI=2   4,751 s           4,881 s           -2,7% (ruido)
+2 nos / MPI=2   2,166 s           1,525 s           +30%
+2 nos / MPI=4   7,915 s           6,995 s           +13%
+4 nos / MPI=4   2,321 s           1,301 s           +44%
+```
+
+Memoria por rank caiu de ~7,25 MB (replicada) para 3,62 MB (MPI=2) ou
+1,82 MB (MPI=4). Speedup real com 4 nos e MPI=4 subiu de 2,05x para 3,65x,
+muito proximo do ideal de 4x.
+
+Artefatos:
+
+```text
+experiments/node-scaling-dist.tsv
+scripts/run_node_scaling_dist.sh
+scripts/analyze_node_scaling_compare.py
+include/block_ellpack_local.hpp
+src/block_ellpack_local.cpp
+src/cg_mpi_distributed.cpp
+src/matrix_market.cpp (adicionada read_matrix_market_local)
+k8s/mpi-operator/cg-nodes-dist.yaml.in
+results/node-scaling-dist-20261116T145412Z/
+results/processed/cg_node_scaling_compare.csv
+results/plots/tvbox-nodes-compare/
+```
+
+Com esta implementacao, a limitacao de matriz replicada esta oficialmente
+superada. A unica limitacao remanescente e o uso de kernels OpenMP proprios
+em vez de BLAS (OpenBLAS continua linkado na imagem para futura integracao).

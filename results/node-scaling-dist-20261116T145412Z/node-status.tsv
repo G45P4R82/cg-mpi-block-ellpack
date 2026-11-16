@@ -1,0 +1,25 @@
+id	status	job	nodes	pods	updated
+d01	RUNNING	cg-bcsstk16-b8-p2-t1-r1-1node-dist-d01	1		2026-11-16T14:54:12Z
+d01	SUCCESS	cg-bcsstk16-b8-p2-t1-r1-1node-dist-d01	1	cg-bcsstk16-b8-p2-t1-r1-1node-dist-d01-launcher-x8djs=tvbox01;cg-bcsstk16-b8-p2-t1-r1-1node-dist-d01-worker-0=tvbox02;cg-bcsstk16-b8-p2-t1-r1-1node-dist-d01-worker-1=tvbox02;	2026-11-16T15:03:39Z
+d02	RUNNING	cg-bcsstk16-b8-p2-t1-r2-1node-dist-d02	1		2026-11-16T15:03:40Z
+d02	SUCCESS	cg-bcsstk16-b8-p2-t1-r2-1node-dist-d02	1	cg-bcsstk16-b8-p2-t1-r2-1node-dist-d02-launcher-klbxl=tvbox01;cg-bcsstk16-b8-p2-t1-r2-1node-dist-d02-worker-0=tvbox02;cg-bcsstk16-b8-p2-t1-r2-1node-dist-d02-worker-1=tvbox02;	2026-11-16T15:08:23Z
+d03	RUNNING	cg-bcsstk16-b8-p2-t1-r3-1node-dist-d03	1		2026-11-16T15:08:23Z
+d03	SUCCESS	cg-bcsstk16-b8-p2-t1-r3-1node-dist-d03	1	cg-bcsstk16-b8-p2-t1-r3-1node-dist-d03-launcher-rczjb=tvbox01;cg-bcsstk16-b8-p2-t1-r3-1node-dist-d03-worker-0=tvbox02;cg-bcsstk16-b8-p2-t1-r3-1node-dist-d03-worker-1=tvbox02;	2026-11-16T15:13:26Z
+d04	RUNNING	cg-bcsstk16-b8-p2-t1-r1-2nodes-dist-d04	2		2026-11-16T15:13:26Z
+d04	SUCCESS	cg-bcsstk16-b8-p2-t1-r1-2nodes-dist-d04	2	cg-bcsstk16-b8-p2-t1-r1-2nodes-dist-d04-launcher-b7hqz=tvbox01;cg-bcsstk16-b8-p2-t1-r1-2nodes-dist-d04-worker-1=tvbox02;	2026-11-16T15:17:01Z
+d05	RUNNING	cg-bcsstk16-b8-p2-t1-r2-2nodes-dist-d05	2		2026-11-16T15:17:02Z
+d05	SUCCESS	cg-bcsstk16-b8-p2-t1-r2-2nodes-dist-d05	2	cg-bcsstk16-b8-p2-t1-r2-2nodes-dist-d05-launcher-h7scc=tvbox01;cg-bcsstk16-b8-p2-t1-r2-2nodes-dist-d05-worker-1=tvbox02;	2026-11-16T15:20:40Z
+d06	RUNNING	cg-bcsstk16-b8-p2-t1-r3-2nodes-dist-d06	2		2026-11-16T15:20:40Z
+d06	SUCCESS	cg-bcsstk16-b8-p2-t1-r3-2nodes-dist-d06	2	cg-bcsstk16-b8-p2-t1-r3-2nodes-dist-d06-launcher-h6j85=tvbox01;cg-bcsstk16-b8-p2-t1-r3-2nodes-dist-d06-worker-1=tvbox02;	2026-11-16T15:24:05Z
+d07	RUNNING	cg-bcsstk16-b8-p4-t1-r1-2nodes-dist-d07	2		2026-11-16T15:24:05Z
+d07	SUCCESS	cg-bcsstk16-b8-p4-t1-r1-2nodes-dist-d07	2	cg-bcsstk16-b8-p4-t1-r1-2nodes-dist-d07-launcher-687w8=tvbox01;cg-bcsstk16-b8-p4-t1-r1-2nodes-dist-d07-worker-1=tvbox02;cg-bcsstk16-b8-p4-t1-r1-2nodes-dist-d07-worker-3=tvbox02;	2026-11-16T15:28:45Z
+d08	RUNNING	cg-bcsstk16-b8-p4-t1-r2-2nodes-dist-d08	2		2026-11-16T15:28:45Z
+d08	SUCCESS	cg-bcsstk16-b8-p4-t1-r2-2nodes-dist-d08	2	cg-bcsstk16-b8-p4-t1-r2-2nodes-dist-d08-launcher-vpmx8=tvbox01;cg-bcsstk16-b8-p4-t1-r2-2nodes-dist-d08-worker-1=tvbox02;cg-bcsstk16-b8-p4-t1-r2-2nodes-dist-d08-worker-3=tvbox02;	2026-11-16T15:33:42Z
+d09	RUNNING	cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09	2		2026-11-16T15:33:42Z
+d09	SUCCESS	cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09	2	cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-launcher-qp4tc=tvbox01;cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-1=tvbox02;cg-bcsstk16-b8-p4-t1-r3-2nodes-dist-d09-worker-3=tvbox02;	2026-11-16T15:38:29Z
+d10	RUNNING	cg-bcsstk16-b8-p4-t1-r1-4nodes-dist-d10	4		2026-11-16T15:38:29Z
+d10	SUCCESS	cg-bcsstk16-b8-p4-t1-r1-4nodes-dist-d10	4	cg-bcsstk16-b8-p4-t1-r1-4nodes-dist-d10-launcher-fkprg=tvbox01;cg-bcsstk16-b8-p4-t1-r1-4nodes-dist-d10-worker-3=tvbox02;	2026-11-16T15:42:19Z
+d11	RUNNING	cg-bcsstk16-b8-p4-t1-r2-4nodes-dist-d11	4		2026-11-16T15:42:20Z
+d11	SUCCESS	cg-bcsstk16-b8-p4-t1-r2-4nodes-dist-d11	4	cg-bcsstk16-b8-p4-t1-r2-4nodes-dist-d11-launcher-jj2v2=tvbox01;cg-bcsstk16-b8-p4-t1-r2-4nodes-dist-d11-worker-3=tvbox02;	2026-11-16T15:45:50Z
+d12	RUNNING	cg-bcsstk16-b8-p4-t1-r3-4nodes-dist-d12	4		2026-11-16T15:45:50Z
+d12	SUCCESS	cg-bcsstk16-b8-p4-t1-r3-4nodes-dist-d12	4	cg-bcsstk16-b8-p4-t1-r3-4nodes-dist-d12-launcher-68plq=tvbox01;cg-bcsstk16-b8-p4-t1-r3-4nodes-dist-d12-worker-3=tvbox02;	2026-11-16T15:49:16Z

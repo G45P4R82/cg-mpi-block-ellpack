@@ -1,0 +1,13 @@
+id	matrix	block	mpi	threads	repetition	nodes	label
+d01	bcsstk16	8	2	1	1	1	1node-dist
+d02	bcsstk16	8	2	1	2	1	1node-dist
+d03	bcsstk16	8	2	1	3	1	1node-dist
+d04	bcsstk16	8	2	1	1	2	2nodes-dist
+d05	bcsstk16	8	2	1	2	2	2nodes-dist
+d06	bcsstk16	8	2	1	3	2	2nodes-dist
+d07	bcsstk16	8	4	1	1	2	2nodes-dist
+d08	bcsstk16	8	4	1	2	2	2nodes-dist
+d09	bcsstk16	8	4	1	3	2	2nodes-dist
+d10	bcsstk16	8	4	1	1	4	4nodes-dist
+d11	bcsstk16	8	4	1	2	4	4nodes-dist
+d12	bcsstk16	8	4	1	3	4	4nodes-dist

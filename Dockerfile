@@ -15,6 +15,11 @@ RUN mkdir -p /opt/cg/bin \
        /tmp/cg/src/block_ellpack.cpp \
        /tmp/cg/src/cg_mpi.cpp \
        -I/tmp/cg/include -lopenblas -o /opt/cg/bin/cg_mpi \
+    && mpicxx -O3 -std=c++17 -fopenmp \
+       /tmp/cg/src/matrix_market.cpp \
+       /tmp/cg/src/block_ellpack_local.cpp \
+       /tmp/cg/src/cg_mpi_distributed.cpp \
+       -I/tmp/cg/include -lopenblas -o /opt/cg/bin/cg_mpi_distributed \
     && rm -rf /tmp/cg \
     && chown -R mpiuser:mpiuser /opt/cg
 

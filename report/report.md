@@ -5,16 +5,27 @@
 Este trabalho implementa o metodo do Gradiente Conjugado distribuido para
 sistemas lineares esparsos, simetricos e definidos positivos. A matriz e
 armazenada em Block ELLPACK, as linhas sao distribuidas entre processos MPI e
-as operacoes locais usam OpenMP. Foram executadas 54 configuracoes da
-campanha principal e 12 configuracoes do experimento complementar de
-escalabilidade por nos, todas com 3 repeticoes validas, no cluster TVBox.
+as operacoes locais usam OpenMP. Foram entregues duas variantes do solver:
+
+- `cg_mpi` **(replicated):** cada processo armazena a matriz inteira e usa
+  `MPI_Allgatherv` para reunir o vetor global a cada iteracao.
+- `cg_mpi_distributed` **(distributed):** cada processo armazena apenas as
+  linhas locais do Block ELLPACK e troca somente as colunas necessarias via
+  `MPI_Alltoallv` seletivo.
+
+Foram executadas 54 configuracoes da campanha principal, 12 configuracoes do
+experimento de escalabilidade por nos (replicated) e 12 configuracoes
+comparativas da variante distributed, todas com 3 repeticoes validas, no
+cluster TVBox.
 
 Os resultados mostram que o solver atingiu o criterio de tolerancia em todas
 as execucoes. Para a matriz `bcsstk16`, o aumento de threads OpenMP reduziu o
 tempo medio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI em um
 unico nos nao apresentou ganho. Entretanto, ao distribuir os processos entre
-nos distintos, o speedup atinge 2,19x com `2 nos` e 2,05x com `4 nos` em
-relacao a referencia de 1 nos.
+nos distintos, o speedup atinge 2,19x com `2 nos` e 2,05x com `4 nos` para a
+variante replicada. A variante distribuida melhora esses numeros para
+**3,12x com 2 nos** e **3,65x com 4 nos**, reduzindo tambem a memoria por rank
+de ~7,25 MB para 1,82 MB.
 
 ## Ambiente
 
@@ -281,6 +292,98 @@ CSV agregado:
 
 ```text
 results/processed/cg_node_scaling_tvbox.csv
+```
+
+### Block ELLPACK distribuido fisicamente
+
+A implementacao inicial do solver mantinha o Block ELLPACK **replicado em
+cada processo MPI**: todos os ranks liam o arquivo Matrix Market inteiro e
+construiam a estrutura completa; somente o calculo do SpMV era particionado
+por linhas. Isso limitava a escalabilidade para matrizes maiores e geraba
+I/O redundante na leitura.
+
+Para resolver esse gargalo foi implementada a variante `cg_mpi_distributed`,
+disponivel na imagem `srmarinho/cg-mpi:arm64-dist`. A nova variante:
+
+- **Le o arquivo Matrix Market de forma filtrada:** cada rank percorre o
+  arquivo e armazena apenas as triplas cuja linha (ou coluna espelhada, no
+  caso simetrico) pertence ao seu intervalo local
+  `[first_row, first_row + row_count)`.
+- **Constroi um Block ELLPACK local:** a estrutura `BlockELLLocal` aloca
+  apenas os blocos de linhas locais; `max_block_columns` passa a ser
+  calculado localmente, o que em geral reduz o padding.
+- **Realiza comunicacao seletiva:** antes de cada SpMV, cada rank troca com
+  `MPI_Alltoallv` somente os valores das colunas globais que de fato aparecem
+  em seus blocos locais. O vetor global `p` nao e mais reunido inteiro em
+  cada iteracao.
+- **Reporta metricas de memoria e comunicacao:** `memory_max_mb`,
+  `memory_avg_mb`, `memory_total_mb`, `comm_bytes`.
+
+Para avaliar o impacto, o experimento de escalabilidade por nos foi
+re-executado com a variante distribuida, mantendo o mesmo pool de nos,
+matriz `bcsstk16`, block size 8 e 3 repeticoes.
+
+| Variante | Nos | MPI | Tempo medio (s) | Speedup vs 1 no MPI=2 | Memoria max por rank (MB) |
+|---|---:|---:|---:|---:|---:|
+| replicated | 1 | 2 | 4,751 | 1,000 | ~7,25 |
+| distributed | 1 | 2 | 4,881 | 0,973 | 3,624 |
+| replicated | 2 | 2 | 2,166 | 2,193 | ~7,25 |
+| distributed | 2 | 2 | 1,525 | 3,116 | 3,624 |
+| replicated | 2 | 4 | 7,915 | 0,600 | ~7,25 |
+| distributed | 2 | 4 | 6,995 | 0,679 | 1,824 |
+| replicated | 4 | 4 | 2,321 | 2,047 | ~7,25 |
+| distributed | 4 | 4 | 1,301 | 3,651 | 1,824 |
+
+A variante distribuida vence a replicated em todas as configuracoes multi-no:
+
+- **2 nos, MPI=2:** 1,53s contra 2,17s (ganho de **30%**).
+- **2 nos, MPI=4:** 7,00s contra 7,92s (ganho de **13%**).
+- **4 nos, MPI=4:** 1,30s contra 2,32s (ganho de **44%**).
+
+Em 4 nos com MPI=4, o speedup real salta de 2,05x (replicada) para
+**3,65x** (distribuida), muito proximo do ideal de 4x. A economia de
+memoria por rank cai de ~7,25 MB (matriz inteira replicada) para 1,82 MB
+(particionada), ou seja, **menos de 25%** da pegada original.
+
+No caso de 1 no, as duas variantes tem desempenho semelhante (`-2,7%`
+dentro do ruido de medicao), o que confirma que o overhead da comunicacao
+seletiva e marginal quando todos os ranks estao no mesmo host.
+
+![Comparacao de tempo](../results/plots/tvbox-nodes-compare/time_compare_mpi4.png)
+
+**Historia do grafico:** o grafico contrasta o tempo medio de solucao para
+`MPI=4` entre replicated e distributed. Em `2 nos`, a versao distribuida
+reduz o tempo em 0,9s. Em `4 nos`, a reducao e de 1,0s - mais que a
+metade do tempo original. A diferenca cresce com o numero de nos porque a
+replicated faz `MPI_Allgatherv` sobre o vetor global inteiro a cada
+iteracao, enquanto a distributed envia apenas as colunas realmente
+necessarias.
+
+![Memoria por rank](../results/plots/tvbox-nodes-compare/memory_per_rank.png)
+
+**Historia do grafico:** a linha azul mostra a memoria maxima por rank
+na variante distribuida. Com `MPI=2` cada rank usa 3,62 MB e com `MPI=4`
+cada rank usa 1,82 MB, aproximadamente metade. A linha pontilhada em 7,25
+MB representa a estimativa da variante replicated, onde cada rank armazena
+a matriz inteira independentemente do numero de processos.
+
+![Speedup comparado](../results/plots/tvbox-nodes-compare/speedup_compare.png)
+
+**Historia do grafico:** o eixo vertical mostra o speedup contra a
+referencia de 1 no e `MPI=2`. Com 4 nos e `MPI=4`, a versao distribuida
+atinge 3,65x - muito proxima da linha ideal (gray dashed). A versao
+replicated chega apenas a 2,05x.
+
+Logs e manifestos da campanha distribuida:
+
+```text
+results/node-scaling-dist-20261116T145412Z/
+```
+
+CSV comparativo:
+
+```text
+results/processed/cg_node_scaling_compare.csv
 ```
 
 ### Graficos

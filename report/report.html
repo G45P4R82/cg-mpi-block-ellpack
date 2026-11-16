@@ -78,15 +78,26 @@
 <p>Este trabalho implementa o metodo do Gradiente Conjugado distribuido para
 sistemas lineares esparsos, simetricos e definidos positivos. A matriz e
 armazenada em Block ELLPACK, as linhas sao distribuidas entre processos MPI e
-as operacoes locais usam OpenMP. Foram executadas 54 configuracoes da
-campanha principal e 12 configuracoes do experimento complementar de
-escalabilidade por nos, todas com 3 repeticoes validas, no cluster TVBox.</p>
+as operacoes locais usam OpenMP. Foram entregues duas variantes do solver:</p>
+<ul>
+<li><code>cg_mpi</code> <strong>(replicated):</strong> cada processo armazena a matriz inteira e usa
+  <code>MPI_Allgatherv</code> para reunir o vetor global a cada iteracao.</li>
+<li><code>cg_mpi_distributed</code> <strong>(distributed):</strong> cada processo armazena apenas as
+  linhas locais do Block ELLPACK e troca somente as colunas necessarias via
+  <code>MPI_Alltoallv</code> seletivo.</li>
+</ul>
+<p>Foram executadas 54 configuracoes da campanha principal, 12 configuracoes do
+experimento de escalabilidade por nos (replicated) e 12 configuracoes
+comparativas da variante distributed, todas com 3 repeticoes validas, no
+cluster TVBox.</p>
 <p>Os resultados mostram que o solver atingiu o criterio de tolerancia em todas
 as execucoes. Para a matriz <code>bcsstk16</code>, o aumento de threads OpenMP reduziu o
 tempo medio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI em um
 unico nos nao apresentou ganho. Entretanto, ao distribuir os processos entre
-nos distintos, o speedup atinge 2,19x com <code>2 nos</code> e 2,05x com <code>4 nos</code> em
-relacao a referencia de 1 nos.</p>
+nos distintos, o speedup atinge 2,19x com <code>2 nos</code> e 2,05x com <code>4 nos</code> para a
+variante replicada. A variante distribuida melhora esses numeros para
+<strong>3,12x com 2 nos</strong> e <strong>3,65x com 4 nos</strong>, reduzindo tambem a memoria por rank
+de ~7,25 MB para 1,82 MB.</p>
 <h2 id="ambiente">Ambiente</h2>
 <p>Os experimentos foram executados no contexto <code>tvbox-k3s</code>, em um cluster k3s
 com 11 nos. Nove nos estavam <code>Ready</code> durante a campanha; dois permaneceram
@@ -482,6 +493,150 @@ apenas para <code>0,51</code> com nos distintos.</p>
 
 <p>CSV agregado:</p>
 <div class="codehilite"><pre><span></span><code>results/processed/cg_node_scaling_tvbox.csv
+</code></pre></div>
+
+<h3 id="block-ellpack-distribuido-fisicamente">Block ELLPACK distribuido fisicamente</h3>
+<p>A implementacao inicial do solver mantinha o Block ELLPACK <strong>replicado em
+cada processo MPI</strong>: todos os ranks liam o arquivo Matrix Market inteiro e
+construiam a estrutura completa; somente o calculo do SpMV era particionado
+por linhas. Isso limitava a escalabilidade para matrizes maiores e geraba
+I/O redundante na leitura.</p>
+<p>Para resolver esse gargalo foi implementada a variante <code>cg_mpi_distributed</code>,
+disponivel na imagem <code>srmarinho/cg-mpi:arm64-dist</code>. A nova variante:</p>
+<ul>
+<li><strong>Le o arquivo Matrix Market de forma filtrada:</strong> cada rank percorre o
+  arquivo e armazena apenas as triplas cuja linha (ou coluna espelhada, no
+  caso simetrico) pertence ao seu intervalo local
+  <code>[first_row, first_row + row_count)</code>.</li>
+<li><strong>Constroi um Block ELLPACK local:</strong> a estrutura <code>BlockELLLocal</code> aloca
+  apenas os blocos de linhas locais; <code>max_block_columns</code> passa a ser
+  calculado localmente, o que em geral reduz o padding.</li>
+<li><strong>Realiza comunicacao seletiva:</strong> antes de cada SpMV, cada rank troca com
+  <code>MPI_Alltoallv</code> somente os valores das colunas globais que de fato aparecem
+  em seus blocos locais. O vetor global <code>p</code> nao e mais reunido inteiro em
+  cada iteracao.</li>
+<li><strong>Reporta metricas de memoria e comunicacao:</strong> <code>memory_max_mb</code>,
+  <code>memory_avg_mb</code>, <code>memory_total_mb</code>, <code>comm_bytes</code>.</li>
+</ul>
+<p>Para avaliar o impacto, o experimento de escalabilidade por nos foi
+re-executado com a variante distribuida, mantendo o mesmo pool de nos,
+matriz <code>bcsstk16</code>, block size 8 e 3 repeticoes.</p>
+<table>
+<thead>
+<tr>
+<th>Variante</th>
+<th style="text-align: right;">Nos</th>
+<th style="text-align: right;">MPI</th>
+<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Speedup vs 1 no MPI=2</th>
+<th style="text-align: right;">Memoria max por rank (MB)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>replicated</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4,751</td>
+<td style="text-align: right;">1,000</td>
+<td style="text-align: right;">~7,25</td>
+</tr>
+<tr>
+<td>distributed</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4,881</td>
+<td style="text-align: right;">0,973</td>
+<td style="text-align: right;">3,624</td>
+</tr>
+<tr>
+<td>replicated</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2,166</td>
+<td style="text-align: right;">2,193</td>
+<td style="text-align: right;">~7,25</td>
+</tr>
+<tr>
+<td>distributed</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1,525</td>
+<td style="text-align: right;">3,116</td>
+<td style="text-align: right;">3,624</td>
+</tr>
+<tr>
+<td>replicated</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">7,915</td>
+<td style="text-align: right;">0,600</td>
+<td style="text-align: right;">~7,25</td>
+</tr>
+<tr>
+<td>distributed</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6,995</td>
+<td style="text-align: right;">0,679</td>
+<td style="text-align: right;">1,824</td>
+</tr>
+<tr>
+<td>replicated</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2,321</td>
+<td style="text-align: right;">2,047</td>
+<td style="text-align: right;">~7,25</td>
+</tr>
+<tr>
+<td>distributed</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1,301</td>
+<td style="text-align: right;">3,651</td>
+<td style="text-align: right;">1,824</td>
+</tr>
+</tbody>
+</table>
+<p>A variante distribuida vence a replicated em todas as configuracoes multi-no:</p>
+<ul>
+<li><strong>2 nos, MPI=2:</strong> 1,53s contra 2,17s (ganho de <strong>30%</strong>).</li>
+<li><strong>2 nos, MPI=4:</strong> 7,00s contra 7,92s (ganho de <strong>13%</strong>).</li>
+<li><strong>4 nos, MPI=4:</strong> 1,30s contra 2,32s (ganho de <strong>44%</strong>).</li>
+</ul>
+<p>Em 4 nos com MPI=4, o speedup real salta de 2,05x (replicada) para
+<strong>3,65x</strong> (distribuida), muito proximo do ideal de 4x. A economia de
+memoria por rank cai de ~7,25 MB (matriz inteira replicada) para 1,82 MB
+(particionada), ou seja, <strong>menos de 25%</strong> da pegada original.</p>
+<p>No caso de 1 no, as duas variantes tem desempenho semelhante (<code>-2,7%</code>
+dentro do ruido de medicao), o que confirma que o overhead da comunicacao
+seletiva e marginal quando todos os ranks estao no mesmo host.</p>
+<p><img alt="Comparacao de tempo" src="../results/plots/tvbox-nodes-compare/time_compare_mpi4.png"></p>
+<p><strong>Historia do grafico:</strong> o grafico contrasta o tempo medio de solucao para
+<code>MPI=4</code> entre replicated e distributed. Em <code>2 nos</code>, a versao distribuida
+reduz o tempo em 0,9s. Em <code>4 nos</code>, a reducao e de 1,0s - mais que a
+metade do tempo original. A diferenca cresce com o numero de nos porque a
+replicated faz <code>MPI_Allgatherv</code> sobre o vetor global inteiro a cada
+iteracao, enquanto a distributed envia apenas as colunas realmente
+necessarias.</p>
+<p><img alt="Memoria por rank" src="../results/plots/tvbox-nodes-compare/memory_per_rank.png"></p>
+<p><strong>Historia do grafico:</strong> a linha azul mostra a memoria maxima por rank
+na variante distribuida. Com <code>MPI=2</code> cada rank usa 3,62 MB e com <code>MPI=4</code>
+cada rank usa 1,82 MB, aproximadamente metade. A linha pontilhada em 7,25
+MB representa a estimativa da variante replicated, onde cada rank armazena
+a matriz inteira independentemente do numero de processos.</p>
+<p><img alt="Speedup comparado" src="../results/plots/tvbox-nodes-compare/speedup_compare.png"></p>
+<p><strong>Historia do grafico:</strong> o eixo vertical mostra o speedup contra a
+referencia de 1 no e <code>MPI=2</code>. Com 4 nos e <code>MPI=4</code>, a versao distribuida
+atinge 3,65x - muito proxima da linha ideal (gray dashed). A versao
+replicated chega apenas a 2,05x.</p>
+<p>Logs e manifestos da campanha distribuida:</p>
+<div class="codehilite"><pre><span></span><code>results/node-scaling-dist-20261116T145412Z/
+</code></pre></div>
+
+<p>CSV comparativo:</p>
+<div class="codehilite"><pre><span></span><code>results/processed/cg_node_scaling_compare.csv
 </code></pre></div>
 
 <h3 id="graficos">Graficos</h3>
