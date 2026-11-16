@@ -140,12 +140,42 @@ results/raw/cg-campaign-tvbox-full-20261115T171915Z/
 - Strong scaling MPI e escala hibrida MPI/OpenMP.
 - CSVs, estatisticas, graficos, logs e manifestos reproduziveis.
 
+## Experimento De Escalabilidade Por Nos
+
+Foi executado um experimento complementar variando explicitamente o numero de
+nos fisicos usados pelos workers MPI. A fila dedicada esta em
+`experiments/node-scaling.tsv` e o runner em `scripts/run_node_scaling.sh`.
+
+```bash
+KUBE_CONTEXT=tvbox-k3s K8S_NAMESPACE=hpc-cg LAUNCHER_POOL=tvbox01 \
+  bash scripts/run_node_scaling.sh
+```
+
+Configuracoes executadas, todas com `bcsstk16`, `block_size=8` e 3
+repeticoes:
+
+| Nos | MPI | Tempo medio (s) | Speedup | Eficiencia |
+|---:|---:|---:|---:|---:|
+| 1 | 2 | 4,751 | 1,000 | 1,000 |
+| 2 | 2 | 2,166 | 2,193 | 1,097 |
+| 2 | 4 | 7,915 | 0,600 | 0,300 |
+| 4 | 4 | 2,321 | 2,047 | 0,512 |
+
+O experimento usou `nodeAffinity` para fixar workers em um pool dedicado e
+`podAntiAffinity` para garantir distribuicao entre nos quando `mpi == nodes`.
+
+Artefatos:
+
+```text
+results/node-scaling-20261116T032812Z/
+results/processed/cg_node_scaling_tvbox.csv
+results/plots/tvbox-nodes/
+```
+
 ## Limitacoes E Pendencias
 
 - O relatorio principal esta em `report/report.md`; o PDF ainda precisa ser
   gerado para a entrega final.
-- A campanha variou processos MPI e threads, mas nao variou explicitamente o
-  numero de nos.
 - Cada processo constroi uma copia completa da matriz Block ELLPACK; as linhas
   computadas sao distribuidas, mas a matriz nao e particionada fisicamente na
   memoria.

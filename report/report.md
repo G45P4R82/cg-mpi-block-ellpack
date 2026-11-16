@@ -5,14 +5,16 @@
 Este trabalho implementa o metodo do Gradiente Conjugado distribuido para
 sistemas lineares esparsos, simetricos e definidos positivos. A matriz e
 armazenada em Block ELLPACK, as linhas sao distribuidas entre processos MPI e
-as operacoes locais usam OpenMP. Foram executadas 54 configuracoes, todas com
-3 repeticoes validas, no cluster TVBox.
+as operacoes locais usam OpenMP. Foram executadas 54 configuracoes da
+campanha principal e 12 configuracoes do experimento complementar de
+escalabilidade por nos, todas com 3 repeticoes validas, no cluster TVBox.
 
 Os resultados mostram que o solver atingiu o criterio de tolerancia em todas
 as execucoes. Para a matriz `bcsstk16`, o aumento de threads OpenMP reduziu o
-tempo medio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI nao
-apresentou ganho neste problema pequeno: 1 processo levou 2,128 s e 4
-processos levaram 2,311 s.
+tempo medio de 2,170 s para 1,500 s, speedup de 1,447x. A escala MPI em um
+unico nos nao apresentou ganho. Entretanto, ao distribuir os processos entre
+nos distintos, o speedup atinge 2,19x com `2 nos` e 2,05x com `4 nos` em
+relacao a referencia de 1 nos.
 
 ## Ambiente
 
@@ -216,6 +218,70 @@ corretude; indica que a matriz e pequena para justificar mais processos.
 A versao com quatro threads foi a mais rapida. A eficiencia caiu porque o
 problema e limitado por acesso a memoria, sincronizacao e tamanho reduzido da
 matriz.
+
+### Escalabilidade por nos
+
+Foi realizado um experimento complementar de escalabilidade por numero de
+nos, usando `bcsstk16`, `block_size=8` e 3 repeticoes por configuracao. Os
+workers foram distribuidos atraves de `nodeAffinity` em um pool de nos ARM64
+(`tvbox02`, `tvbox03`, `cluster-tvbox-04`, `cluster-tvbox-05`), e o launcher
+foi fixado em `tvbox01`. Para `nodes == mpi` foi usado `podAntiAffinity` para
+garantir exatamente um worker por no.
+
+| Nos | MPI | Tempo medio (s) | Speedup | Eficiencia |
+|---:|---:|---:|---:|---:|
+| 1 | 2 | 4,751 | 1,000 | 1,000 |
+| 2 | 2 | 2,166 | 2,193 | 1,097 |
+| 2 | 4 | 7,915 | 0,600 | 0,300 |
+| 4 | 4 | 2,321 | 2,047 | 0,512 |
+
+A configuracao de referencia foi `1 no + 2 processos MPI`. O speedup
+superlinear observado em `2 nos` (2,19x) indica que o kernel SpMV e
+fortemente memory-bound: ao distribuir o trabalho entre nos distintos, cada
+processo usa o cache e a largura de banda local de um nos proprio, em vez
+de competir com outro processo pelo mesmo canal de memoria.
+
+A configuracao `2 nos + 4 processos` apresentou o pior desempenho porque
+dobrou o numero de workers por no. Dois processos MPI por nos TVBox competem
+pelos quatro cores fisicos e pela memoria compartilhada, elevando o tempo
+para 7,9s. Esse resultado confirma que a localizacao dos processos importa
+tanto quanto a quantidade total.
+
+Em `4 nos`, o speedup voltou a 2,05x. A eficiencia cai para `0,512` porque
+cada iteracao do CG exige `MPI_Allgatherv` e `MPI_Allreduce`, e o custo
+dessas sincronizacoes entre quatro nos via rede cresce proporcionalmente.
+Ainda assim, foi a configuracao mais rapida com `4` processos.
+
+![Tempo por nos](../results/plots/tvbox-nodes/time_by_nodes.png)
+
+**Historia do grafico:** o eixo horizontal mostra o numero de nos distintos
+onde os workers MPI foram agendados. A linha laranja (`MPI=2`) parte de
+`4,75s` com um no e cai para `2,17s` com dois nos, reduzindo o tempo em mais
+da metade. A linha azul (`MPI=4`) partiria de co-location em dois nos com
+`7,92s` e desce para `2,32s` em quatro nos distintos. O grafico demonstra
+que espalhar processos por mais nos vence todas as versoes com concentracao
+no mesmo nos.
+
+![Speedup e eficiencia por nos](../results/plots/tvbox-nodes/speedup_efficiency_by_nodes.png)
+
+**Historia do grafico:** a linha ideal mostraria speedup proporcional ao
+numero de nos. O speedup medido com `MPI=4` fica abaixo do ideal em todas as
+configuracoes: a 2 nos ele e inferior a 1 (aumentar workers sem espalhar
+piora), e a 4 nos chega a 2,05x. A eficiencia revela o custo real da
+comunicacao MPI entre maquinas: cai para `0,30` quando ha co-location e sobe
+apenas para `0,51` com nos distintos.
+
+Logs e manifestos deste experimento:
+
+```text
+results/node-scaling-20261116T032812Z/
+```
+
+CSV agregado:
+
+```text
+results/processed/cg_node_scaling_tvbox.csv
+```
 
 ### Graficos
 

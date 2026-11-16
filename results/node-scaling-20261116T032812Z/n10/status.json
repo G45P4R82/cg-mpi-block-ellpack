@@ -1,0 +1,253 @@
+{
+    "apiVersion": "kubeflow.org/v2beta1",
+    "kind": "MPIJob",
+    "metadata": {
+        "annotations": {
+            "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"kubeflow.org/v2beta1\",\"kind\":\"MPIJob\",\"metadata\":{\"annotations\":{},\"labels\":{\"experiment\":\"node-scaling\",\"node-count\":\"4\"},\"name\":\"cg-bcsstk16-b8-p4-t1-r1-4nodes-n10\",\"namespace\":\"hpc-cg\"},\"spec\":{\"launcherCreationPolicy\":\"WaitForWorkersReady\",\"mpiImplementation\":\"MPICH\",\"mpiReplicaSpecs\":{\"Launcher\":{\"replicas\":1,\"template\":{\"spec\":{\"affinity\":{\"nodeAffinity\":{\"requiredDuringSchedulingIgnoredDuringExecution\":{\"nodeSelectorTerms\":[{\"matchExpressions\":[{\"key\":\"kubernetes.io/hostname\",\"operator\":\"In\",\"values\":[\"tvbox01\"]}]}]}}},\"containers\":[{\"args\":[\"mpirun\",\"-n\",\"4\",\"/opt/cg/bin/cg_mpi\",\"--matrix\",\"/opt/cg/matrices/bcsstk16/bcsstk16.mtx\",\"--block-size\",\"8\",\"--threads\",\"1\",\"--tol\",\"1e-8\",\"--max-iters\",\"10000\"],\"env\":[{\"name\":\"OMP_NUM_THREADS\",\"value\":\"1\"},{\"name\":\"OMP_PROC_BIND\",\"value\":\"close\"},{\"name\":\"OMP_PLACES\",\"value\":\"cores\"}],\"image\":\"srmarinho/cg-mpi:arm64\",\"imagePullPolicy\":\"Always\",\"name\":\"cg-launcher\",\"resources\":{\"limits\":{\"cpu\":\"1\",\"memory\":\"512Mi\"},\"requests\":{\"cpu\":\"200m\",\"memory\":\"256Mi\"}},\"securityContext\":{\"runAsUser\":1000}}],\"nodeSelector\":{\"kubernetes.io/arch\":\"arm64\"}}}},\"Worker\":{\"replicas\":4,\"template\":{\"spec\":{\"affinity\":{\"nodeAffinity\":{\"requiredDuringSchedulingIgnoredDuringExecution\":{\"nodeSelectorTerms\":[{\"matchExpressions\":[{\"key\":\"kubernetes.io/hostname\",\"operator\":\"In\",\"values\":[\"tvbox02\",\"tvbox03\",\"cluster-tvbox-04\",\"cluster-tvbox-05\"]}]}]}},\"podAntiAffinity\":{\"requiredDuringSchedulingIgnoredDuringExecution\":[{\"labelSelector\":{\"matchExpressions\":[{\"key\":\"training.kubeflow.org/job-name\",\"operator\":\"In\",\"values\":[\"cg-bcsstk16-b8-p4-t1-r1-4nodes-n10\"]},{\"key\":\"training.kubeflow.org/job-role\",\"operator\":\"In\",\"values\":[\"worker\"]}]},\"topologyKey\":\"kubernetes.io/hostname\"}]}},\"containers\":[{\"args\":[\"-De\",\"-f\",\"/home/mpiuser/.sshd_config\"],\"command\":[\"/usr/sbin/sshd\"],\"env\":[{\"name\":\"OMP_NUM_THREADS\",\"value\":\"1\"},{\"name\":\"OMP_PROC_BIND\",\"value\":\"close\"},{\"name\":\"OMP_PLACES\",\"value\":\"cores\"}],\"image\":\"srmarinho/cg-mpi:arm64\",\"imagePullPolicy\":\"Always\",\"name\":\"cg-worker\",\"readinessProbe\":{\"initialDelaySeconds\":2,\"tcpSocket\":{\"port\":2222}},\"resources\":{\"limits\":{\"cpu\":\"1\",\"memory\":\"512Mi\"},\"requests\":{\"cpu\":\"200m\",\"memory\":\"256Mi\"}},\"securityContext\":{\"runAsUser\":1000}}],\"nodeSelector\":{\"kubernetes.io/arch\":\"arm64\"}}}}},\"runPolicy\":{\"activeDeadlineSeconds\":3600,\"cleanPodPolicy\":\"Running\"},\"slotsPerWorker\":1,\"sshAuthMountPath\":\"/home/mpiuser/.ssh\"}}\n"
+        },
+        "creationTimestamp": "2026-11-16T03:57:58Z",
+        "generation": 1,
+        "labels": {
+            "experiment": "node-scaling",
+            "node-count": "4"
+        },
+        "name": "cg-bcsstk16-b8-p4-t1-r1-4nodes-n10",
+        "namespace": "hpc-cg",
+        "resourceVersion": "4419454",
+        "uid": "fec2170e-7d0c-4259-8cf4-4655b1f6e2e8"
+    },
+    "spec": {
+        "launcherCreationPolicy": "WaitForWorkersReady",
+        "mpiImplementation": "MPICH",
+        "mpiReplicaSpecs": {
+            "Launcher": {
+                "replicas": 1,
+                "template": {
+                    "spec": {
+                        "affinity": {
+                            "nodeAffinity": {
+                                "requiredDuringSchedulingIgnoredDuringExecution": {
+                                    "nodeSelectorTerms": [
+                                        {
+                                            "matchExpressions": [
+                                                {
+                                                    "key": "kubernetes.io/hostname",
+                                                    "operator": "In",
+                                                    "values": [
+                                                        "tvbox01"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        },
+                        "containers": [
+                            {
+                                "args": [
+                                    "mpirun",
+                                    "-n",
+                                    "4",
+                                    "/opt/cg/bin/cg_mpi",
+                                    "--matrix",
+                                    "/opt/cg/matrices/bcsstk16/bcsstk16.mtx",
+                                    "--block-size",
+                                    "8",
+                                    "--threads",
+                                    "1",
+                                    "--tol",
+                                    "1e-8",
+                                    "--max-iters",
+                                    "10000"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "OMP_NUM_THREADS",
+                                        "value": "1"
+                                    },
+                                    {
+                                        "name": "OMP_PROC_BIND",
+                                        "value": "close"
+                                    },
+                                    {
+                                        "name": "OMP_PLACES",
+                                        "value": "cores"
+                                    }
+                                ],
+                                "image": "srmarinho/cg-mpi:arm64",
+                                "imagePullPolicy": "Always",
+                                "name": "cg-launcher",
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "1",
+                                        "memory": "512Mi"
+                                    },
+                                    "requests": {
+                                        "cpu": "200m",
+                                        "memory": "256Mi"
+                                    }
+                                },
+                                "securityContext": {
+                                    "runAsUser": 1000
+                                }
+                            }
+                        ],
+                        "nodeSelector": {
+                            "kubernetes.io/arch": "arm64"
+                        }
+                    }
+                }
+            },
+            "Worker": {
+                "replicas": 4,
+                "template": {
+                    "spec": {
+                        "affinity": {
+                            "nodeAffinity": {
+                                "requiredDuringSchedulingIgnoredDuringExecution": {
+                                    "nodeSelectorTerms": [
+                                        {
+                                            "matchExpressions": [
+                                                {
+                                                    "key": "kubernetes.io/hostname",
+                                                    "operator": "In",
+                                                    "values": [
+                                                        "tvbox02",
+                                                        "tvbox03",
+                                                        "cluster-tvbox-04",
+                                                        "cluster-tvbox-05"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            },
+                            "podAntiAffinity": {
+                                "requiredDuringSchedulingIgnoredDuringExecution": [
+                                    {
+                                        "labelSelector": {
+                                            "matchExpressions": [
+                                                {
+                                                    "key": "training.kubeflow.org/job-name",
+                                                    "operator": "In",
+                                                    "values": [
+                                                        "cg-bcsstk16-b8-p4-t1-r1-4nodes-n10"
+                                                    ]
+                                                },
+                                                {
+                                                    "key": "training.kubeflow.org/job-role",
+                                                    "operator": "In",
+                                                    "values": [
+                                                        "worker"
+                                                    ]
+                                                }
+                                            ]
+                                        },
+                                        "topologyKey": "kubernetes.io/hostname"
+                                    }
+                                ]
+                            }
+                        },
+                        "containers": [
+                            {
+                                "args": [
+                                    "-De",
+                                    "-f",
+                                    "/home/mpiuser/.sshd_config"
+                                ],
+                                "command": [
+                                    "/usr/sbin/sshd"
+                                ],
+                                "env": [
+                                    {
+                                        "name": "OMP_NUM_THREADS",
+                                        "value": "1"
+                                    },
+                                    {
+                                        "name": "OMP_PROC_BIND",
+                                        "value": "close"
+                                    },
+                                    {
+                                        "name": "OMP_PLACES",
+                                        "value": "cores"
+                                    }
+                                ],
+                                "image": "srmarinho/cg-mpi:arm64",
+                                "imagePullPolicy": "Always",
+                                "name": "cg-worker",
+                                "readinessProbe": {
+                                    "initialDelaySeconds": 2,
+                                    "tcpSocket": {
+                                        "port": 2222
+                                    }
+                                },
+                                "resources": {
+                                    "limits": {
+                                        "cpu": "1",
+                                        "memory": "512Mi"
+                                    },
+                                    "requests": {
+                                        "cpu": "200m",
+                                        "memory": "256Mi"
+                                    }
+                                },
+                                "securityContext": {
+                                    "runAsUser": 1000
+                                }
+                            }
+                        ],
+                        "nodeSelector": {
+                            "kubernetes.io/arch": "arm64"
+                        }
+                    }
+                }
+            }
+        },
+        "runLauncherAsWorker": false,
+        "runPolicy": {
+            "activeDeadlineSeconds": 3600,
+            "cleanPodPolicy": "Running",
+            "suspend": false
+        },
+        "slotsPerWorker": 1,
+        "sshAuthMountPath": "/home/mpiuser/.ssh"
+    },
+    "status": {
+        "completionTime": "2026-11-16T04:00:06Z",
+        "conditions": [
+            {
+                "lastTransitionTime": "2026-11-16T03:57:58Z",
+                "lastUpdateTime": "2026-11-16T03:57:58Z",
+                "message": "MPIJob hpc-cg/cg-bcsstk16-b8-p4-t1-r1-4nodes-n10 is created.",
+                "reason": "MPIJobCreated",
+                "status": "True",
+                "type": "Created"
+            },
+            {
+                "lastTransitionTime": "2026-11-16T03:58:16Z",
+                "lastUpdateTime": "2026-11-16T03:58:16Z",
+                "message": "MPIJob hpc-cg/cg-bcsstk16-b8-p4-t1-r1-4nodes-n10 is running.",
+                "reason": "MPIJobRunning",
+                "status": "False",
+                "type": "Running"
+            },
+            {
+                "lastTransitionTime": "2026-11-16T04:00:06Z",
+                "lastUpdateTime": "2026-11-16T04:00:06Z",
+                "message": "MPIJob hpc-cg/cg-bcsstk16-b8-p4-t1-r1-4nodes-n10 successfully completed.",
+                "reason": "MPIJobSucceeded",
+                "status": "True",
+                "type": "Succeeded"
+            }
+        ],
+        "replicaStatuses": {
+            "Launcher": {
+                "succeeded": 1
+            },
+            "Worker": {}
+        },
+        "startTime": "2026-11-16T03:57:58Z"
+    }
+}

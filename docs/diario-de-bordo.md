@@ -244,3 +244,53 @@ Acoes previstas:
     copia completa da matriz Block ELLPACK.
 
 Esse experimento e complementar. Nao invalida os resultados atuais.
+
+### Execucao do experimento de escalabilidade por nos (2026-11-16)
+
+O experimento complementar foi implementado e executado com sucesso. Foram
+realizadas 12 execucoes em 4 configuracoes:
+
+```text
+1 nos + 2 processos MPI: 4,751 s medio (referencia)
+2 nos + 2 processos MPI: 2,166 s medio (speedup 2,19x super-linear)
+2 nos + 4 processos MPI: 7,915 s medio (speedup 0,60x, co-location nociva)
+4 nos + 4 processos MPI: 2,321 s medio (speedup 2,05x)
+```
+
+Observacao importante: todos os residuos permaneceram abaixo de 1e-8.
+
+Decisoes tecnicas tomadas:
+
+1. Pool de nos dedicado para workers: `tvbox02, tvbox03, cluster-tvbox-04,
+   cluster-tvbox-05` via `nodeAffinity.requiredDuringSchedulingIgnored`.
+2. Launcher fixado em `tvbox01` para evitar simetria de `podAntiAffinity`
+   ao filtrar `training.kubeflow.org/job-role=worker`.
+3. `podAntiAffinity` aplicada aos workers apenas quando `nodes == mpi`,
+   garantindo exatamente um worker por no. Quando `mpi > nodes`, o anti
+   affinity e suprimido para permitir co-location (2 workers por no).
+4. Recursos ajustados para `limits.memory=512Mi` e `requests.memory=256Mi`
+   para caber em nos de 1,8 GiB.
+5. Placement dos workers coletado em `pod-placement.txt`, lido antes do
+   `cleanPodPolicy` deletar os pods ao final.
+
+Artefatos gerados:
+
+```text
+results/node-scaling-20261116T032812Z/
+results/processed/cg_node_scaling_tvbox.csv
+results/plots/tvbox-nodes/time_by_nodes.png
+results/plots/tvbox-nodes/speedup_efficiency_by_nodes.png
+```
+
+Scripts introduzidos:
+
+```text
+experiments/node-scaling.tsv
+k8s/mpi-operator/cg-nodes.yaml.in
+scripts/run_node_scaling.sh
+scripts/analyze_node_scaling.py
+```
+
+Conclusao da pendencia: o requisito de variar o numero de nos esta
+atendido. A limitacao sobre matriz replicada em cada processo permanece
+documentada como trabalho futuro.
