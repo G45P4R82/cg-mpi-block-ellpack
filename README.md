@@ -202,6 +202,19 @@ Comparacao direta (`bcsstk16`, block 8, 3 repeticoes):
 Com 4 nos e MPI=4, a variante distribuida e 44% mais rapida e usa menos de
 25% da memoria por rank em comparacao com a replicada.
 
+Tambem foi executado um stress test distribuido com `bcsstk17`:
+
+```text
+10.974 x 10.974, 428.650 nnz, MPI=2, block=8
+tempo medio: 75,021 s
+memoria total: 16,598 MB
+memoria maxima/rank: 8,474 MB
+residuo apos 10.000 iteracoes: 1,18466e-06
+```
+
+Esse caso nao atingiu `1e-8` dentro do limite de iteracoes e e tratado como
+stress test, nao como validacao aprovada.
+
 Analisador comparativo:
 
 ```bash
@@ -220,8 +233,14 @@ results/plots/tvbox-nodes-compare/
 
 ## Limitacoes E Pendencias
 
+- A variante distribuida implementa comunicacao seletiva via `MPI_Alltoallv`,
+  mas ainda usa um buffer `p_global` de tamanho global; a compactacao para um
+  `p_view` local e uma melhoria futura.
 - OpenBLAS esta disponivel e linkado, mas os kernels principais usam operacoes
   C++ paralelas com OpenMP em vez de chamadas diretas `ddot`/`daxpy`.
+- A comparacao distribuida com CSR ou SELL-C-sigma ainda nao foi realizada.
+- `report/report.pdf` e gerado por `scripts/build_report_pdf.py` a partir de
+  `report/report.md`.
 
 ## Evidencias E Documentacao
 

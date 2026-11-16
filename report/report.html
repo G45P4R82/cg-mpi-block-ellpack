@@ -268,6 +268,26 @@ eficiencia = speedup / numero de recursos adicionais
 
 <p>Para MPI, a referencia foi a configuracao com um processo. Para OpenMP, a
 referencia foi a configuracao hibrida com uma thread.</p>
+<h3 id="justificativa-das-decisoes-de-projeto">Justificativa das decisoes de projeto</h3>
+<p>A distribuicao inicial por intervalos contiguos de linhas foi escolhida por
+ser simples, deterministica e por preservar a localidade dos blocos do
+ELLPACK. Ela tambem permite calcular <code>counts</code> e <code>displacements</code> diretamente a
+partir da dimensao global, sem uma etapa adicional de particionamento.</p>
+<p>O Block ELLPACK foi escolhido porque agrupa entradas em blocos densos e deixa
+o laço interno do SpMV regular. Essa regularidade favorece <code>schedule(static)</code>
+linhas possuem padroes de esparsidade diferentes, motivo pelo qual os tamanhos
+4, 8, 16 e 32 foram comparados.</p>
+<p>O modelo MPI+OpenMP foi escolhido para separar os dois niveis de paralelismo:
+MPI distribui os intervalos de linhas entre processos e OpenMP explora os
+cores dentro de cada processo. As reducoes globais usam <code>MPI_Allreduce</code>,
+Depois, a variante distributed substitui a comunicacao completa por pedidos
+seletivos com <code>MPI_Alltoallv</code>, evitando enviar colunas que nao aparecem nos
+blocos locais.</p>
+<p>As linhas sao contiguas, e nao ciclicas, porque isso reduz a complexidade do
+mapa de proprietario de cada linha e torna a validacao do resultado local mais
+direta. O custo potencial dessa escolha e desbalanceamento se a quantidade de
+nao zeros variar muito entre intervalos; por isso os logs registram iteracoes,
+padding e tempos por configuracao.</p>
 <h2 id="validacao">Validacao</h2>
 <p>Para cada execucao, foi construída uma solucao conhecida com <code>x_true</code> igual a
 um vetor de uns. O vetor do lado direito foi calculado como <code>b = A*x_true</code>.
@@ -308,6 +328,18 @@ results/processed/cg_metrics_tvbox.csv
 
 <p>Os tempos de solucao observados variaram entre <code>1,39937 s</code> e <code>22,993 s</code>,
 dependendo da matriz e da configuracao.</p>
+<h3 id="impacto-do-tamanho-do-problema">Impacto do tamanho do problema</h3>
+<p>As matrizes nao diferem apenas em dimensao; elas tambem apresentam diferentes
+padroes de esparsidade e dificuldades de convergencia. <code>bcsstk34</code> possui 588
+linhas e terminou em aproximadamente 1,4 s nas melhores configuracoes. A
+<code>bcsstk16</code>, apesar de possuir 4.884 linhas, terminou em aproximadamente 2,16 s
+e precisou de cerca de 313 iteracoes. Ja <code>bcsstk14</code> levou aproximadamente
+16,88 s no melhor block size e precisou de cerca de 5.557 iteracoes.</p>
+<p>Isso mostra que o tempo nao depende somente do numero de linhas. O numero de
+iteracoes do CG, o padrao de nao zeros, o padding do Block ELLPACK e o
+condicionamento numerico influenciam o resultado. A comparacao entre matrizes
+e, portanto, uma comparacao de workloads estruturais diferentes, nao apenas
+de tamanhos diferentes.</p>
 <h3 id="melhor-block-size-por-matriz">Melhor block size por matriz</h3>
 <table>
 <thead>
@@ -513,8 +545,9 @@ disponivel na imagem <code>srmarinho/cg-mpi:arm64-dist</code>. A nova variante:<
   calculado localmente, o que em geral reduz o padding.</li>
 <li><strong>Realiza comunicacao seletiva:</strong> antes de cada SpMV, cada rank troca com
   <code>MPI_Alltoallv</code> somente os valores das colunas globais que de fato aparecem
-  em seus blocos locais. O vetor global <code>p</code> nao e mais reunido inteiro em
-  cada iteracao.</li>
+  em seus blocos locais. O <code>MPI_Allgatherv</code> da variante replicated nao e mais
+  executado; a implementacao atual ainda usa um buffer global <code>p_global</code> para
+  compatibilidade do SpMV, mas preenche apenas as posicoes necessarias.</li>
 <li><strong>Reporta metricas de memoria e comunicacao:</strong> <code>memory_max_mb</code>,
   <code>memory_avg_mb</code>, <code>memory_total_mb</code>, <code>comm_bytes</code>.</li>
 </ul>
@@ -612,6 +645,40 @@ memoria por rank cai de ~7,25 MB (matriz inteira replicada) para 1,82 MB
 <p>No caso de 1 no, as duas variantes tem desempenho semelhante (<code>-2,7%</code>
 dentro do ruido de medicao), o que confirma que o overhead da comunicacao
 seletiva e marginal quando todos os ranks estao no mesmo host.</p>
+<h3 id="matriz-maior-bcsstk17">Matriz maior: bcsstk17</h3>
+<p>Para demonstrar o comportamento em um problema maior, foi adicionada a matriz
+<code>bcsstk17</code> (10.974 x 10.974, 428.650 <code>nnz</code> expandido), representando um vaso
+de pressao elevado. Foram executadas 3 repeticoes da variante distributed com
+2 processos MPI, <code>block_size=8</code> e uma thread OpenMP.</p>
+<table>
+<thead>
+<tr>
+<th>Matriz</th>
+<th style="text-align: right;">Tempo medio (s)</th>
+<th style="text-align: right;">Iteracoes</th>
+<th style="text-align: right;">Residuo relativo</th>
+<th style="text-align: right;">Memoria total (MB)</th>
+<th style="text-align: right;">Memoria max/rank (MB)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bcsstk17</code></td>
+<td style="text-align: right;">75,021</td>
+<td style="text-align: right;">10000</td>
+<td style="text-align: right;">1,18466e-06</td>
+<td style="text-align: right;">16,598</td>
+<td style="text-align: right;">8,474</td>
+</tr>
+</tbody>
+</table>
+<p>O solver atingiu o limite de 10.000 iteracoes antes de atingir a tolerancia
+<code>1e-8</code>, terminando com residuo <code>1,18466e-06</code>. Este caso e reportado como
+stress test de memoria e convergencia, nao como uma validacao aprovada pela
+tolerancia principal. Mesmo sem convergir dentro do limite, a variante
+distributed manteve a corretude estrutural e usou aproximadamente metade da
+memoria maxima por rank esperada na versao replicada.</p>
+<p>Os dados deste teste estao em <code>results/processed/bcsstk17_dist.csv</code>.</p>
 <p><img alt="Comparacao de tempo" src="../results/plots/tvbox-nodes-compare/time_compare_mpi4.png"></p>
 <p><strong>Historia do grafico:</strong> o grafico contrasta o tempo medio de solucao para
 <code>MPI=4</code> entre replicated e distributed. Em <code>2 nos</code>, a versao distribuida
@@ -690,7 +757,10 @@ melhor compromisso nos tempos medidos.</p>
 <p>O <code>MPI_Allgatherv</code> e executado a cada iteracao para disponibilizar o vetor
 global <code>p</code>. Tambem existem dois <code>MPI_Allreduce</code> por iteracao para produtos
 escalares. Esses pontos de sincronizacao explicam parte da ausencia de ganho
-no strong scaling.</p>
+no strong scaling da variante replicated. Na variante distributed, o
+<code>MPI_Allgatherv</code> foi substituido por pedidos e valores seletivos com
+<code>MPI_Alltoallv</code>; o numero de bytes trocados passou a ser registrado em
+<code>comm_bytes</code>.</p>
 <p>O padding do Block ELLPACK e outro gargalo: cada bloco armazena uma quantidade
 fixa de valores, incluindo zeros de preenchimento. Para matrizes maiores ou
 mais irregulares, uma comparacao com CSR ou SELL-C-sigma e uma otimizacao
@@ -705,15 +775,58 @@ redundancia de leituras causada pelo padding e a comunicacao global por
 iteracao limitam o aproveitamento de mais processos MPI. A escala OpenMP
 apresentou ganho mais consistente neste ambiente, embora a eficiencia tambem
 caia com quatro threads.</p>
+<h3 id="desbalanceamento-de-carga">Desbalanceamento de carga</h3>
+<p>A distribuicao por linhas contiguas fornece balanceamento aproximado pelo
+numero de linhas, mas nao garante o mesmo numero de entradas ou blocos em cada
+rank. O padding local e o numero de colunas de bloco podem variar entre
+intervalos. Na variante distributed, <code>max_block_columns</code> e calculado
+localmente, o que reduz memoria, mas tambem torna importante acompanhar o
+maior consumo por rank. Os experimentos por nos mostram outro tipo de
+desbalanceamento: colocar dois workers no mesmo no aumentou o tempo para
+7,915 s, enquanto espalhar os mesmos quatro processos em quatro nos reduziu o
+tempo para 2,321 s na variante replicated.</p>
+<h3 id="reprodutibilidade">Reprodutibilidade</h3>
+<p>Os comandos, filas, manifests, logs, CSVs e graficos estao preservados no
+repositorio. A campanha principal usa <code>scripts/run_k3s_campaign.sh</code>; a fila
+retomavel usa <code>scripts/run_queue.sh</code>; a campanha de nos usa
+<code>scripts/run_node_scaling.sh</code> e sua variante distributed usa
+<code>scripts/run_node_scaling_dist.sh</code>. A imagem distribuida esta publicada como
+<code>srmarinho/cg-mpi:arm64-dist</code>. Os resultados finais incluem os nomes dos nos
+observados em <code>pod-placement.txt</code> e os parametros originais nos manifests.</p>
+<h2 id="limitacoes-e-trabalho-futuro">Limitacoes E Trabalho Futuro</h2>
+<ul>
+<li>A variante distributed implementa a Fase 3a: o vetor <code>p_global</code> ainda e um
+  buffer de tamanho global, embora somente as colunas necessarias sejam
+  preenchidas e comunicadas. A Fase 3b pode compactar esse vetor em um
+  <code>p_view</code> local.</li>
+<li>OpenBLAS esta linkado e disponivel, mas os produtos escalares e atualizacoes
+  principais usam kernels C++ com OpenMP. Uma comparacao direta com <code>ddot</code> e
+  <code>daxpy</code> e uma etapa futura.</li>
+<li>O Block ELLPACK distribuido deve ser comparado com CSR e SELL-C-sigma em
+  matrizes maiores.</li>
+<li><code>bcsstk17</code> nao atingiu <code>1e-8</code> em 10.000 iteracoes; um estudo de tolerancia,
+  precondicionamento e <code>max-iters</code> maior seria necessario para uma validacao
+  numerica completa desse caso.</li>
+</ul>
 <h2 id="conclusao">Conclusao</h2>
 <p>O projeto entrega uma implementacao distribuida funcional de Gradiente
-Conjugado com MPI, OpenMP e Block ELLPACK. As 54 execucoes foram concluidas
-com residuo abaixo de <code>1e-8</code>, e os resultados foram preservados em CSV,
-estatisticas, logs e graficos.</p>
+Conjugado com MPI, OpenMP e duas variantes de Block ELLPACK. A campanha
+principal teve 54 execucoes validas; o experimento por nos teve 12 execucoes
+replicated; e a comparacao distributed teve outras 12 execucoes validas. Os
+residuos das campanhas de bcsstk34, bcsstk14 e bcsstk16 ficaram abaixo de
+<code>1e-8</code>, e os resultados foram preservados em CSV, estatisticas, logs e
+graficos.</p>
 <p>Os experimentos mostram que a escolha do block size e mais importante que
-simplesmente aumentar o numero de processos MPI para as matrizes avaliadas.
-Como trabalho futuro, recomenda-se reduzir o padding, substituir o
-<code>MPI_Allgatherv</code> por comunicacao seletiva quando possivel, medir os custos de
-cada fase separadamente e comparar com CSR.</p>
+simplesmente aumentar o numero de processos MPI na variante replicated. A
+variante distributed resolve a principal limitacao de memoria: com 4 nos e
+MPI=4, reduziu o tempo de 2,321s para 1,301s, aumentou o speedup de 2,05x
+para 3,65x e reduziu a memoria maxima por rank de aproximadamente 7,25 MB
+para 1,82 MB.</p>
+<p>O trabalho tambem demonstrou que a localizacao dos processos e importante:
+co-location de dois workers por no degradou o desempenho, enquanto a
+distribuicao pelos nos distintos recuperou escalabilidade proxima do ideal.
+Como trabalho futuro, recomenda-se compactar o <code>p_view</code> da Fase 3b, comparar
+com CSR/SELL-C-sigma, integrar <code>ddot</code>/<code>daxpy</code> do OpenBLAS diretamente e usar
+precondicionamento para matrizes maiores como <code>bcsstk17</code>.</p>
 </body>
 </html>

@@ -1,0 +1,4 @@
+id	matrix	block	mpi	threads	repetition	nodes	label
+b17-01	bcsstk17	8	2	1	1	2	bcsstk17-dist
+b17-02	bcsstk17	8	2	1	2	2	bcsstk17-dist
+b17-03	bcsstk17	8	2	1	3	2	bcsstk17-dist

@@ -1,0 +1,34 @@
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher... Retrying
+Couldn't resolve cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-launcher
+Resolved cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-worker-0.cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02.hpc-cg.svc
+Resolved cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-worker-1.cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02.hpc-cg.svc
+Warning: Permanently added '[cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-worker-1.cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+Warning: Permanently added '[cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02-worker-0.cg-bcsstk17-b8-p2-t1-r2-bcsstk17-dist-b17-02.hpc-cg.svc]:2222' (ECDSA) to the list of known hosts.
+variant=distributed
+matrix=/opt/cg/matrices/bcsstk17/bcsstk17.mtx
+rows=10974
+nnz=428650
+block_size=8
+mpi_processes=2
+omp_threads=1
+read_time_s=0.961089
+conversion_time_s=0.0519297
+solve_time_s=75.2287
+iterations=10000
+relative_residual=1.18466e-06
+solution_error=0.215542
+padding_overhead=0.80119
+padding_overhead_max=0.815078
+memory_total_mb=16.5978
+memory_max_mb=8.474
+memory_avg_mb=8.2989
+comm_bytes=97280000
